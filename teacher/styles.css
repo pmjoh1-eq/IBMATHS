@@ -44,7 +44,6 @@ h4{margin:10px 0 6px 0;color:var(--muted)}
 .btn.full{width:100%}
 
 .info{border:1px solid var(--border);background:#f8fafc;padding:10px;border-radius:12px;color:var(--muted);font-size:13px}
-
 .hidden{display:none}
 .sep{border:none;border-top:1px dashed var(--border);margin:14px 0}
 
@@ -52,19 +51,20 @@ h4{margin:10px 0 6px 0;color:var(--muted)}
 .col{flex:1;min-width:280px}
 .actions{display:flex;gap:8px;justify-content:flex-end;align-items:flex-end}
 
-.treeItem{padding:8px 10px;border-radius:12px;border:1px solid var(--border);background:#fff;margin-bottom:8px}
-.treeItem .hdr{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.treeItem .name{font-weight:800}
-.treeItem .meta{font-size:12px;color:var(--muted)}
-.treeItem .children{margin-top:8px;padding-left:10px;border-left:2px solid #eef2f7}
+.treeItem{padding:10px;border-radius:12px;border:1px solid var(--border);background:#fff;margin-bottom:10px}
+.treeHdr{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.treeTitle{font-weight:900}
+.treeMeta{font-size:12px;color:var(--muted)}
+.treeChildren{margin-top:8px;padding-left:10px;border-left:2px solid #eef2f7}
 
-.treeBtn{padding:6px 10px;border-radius:10px;border:1px solid var(--border);background:#f8fafc;cursor:pointer;font-weight:700;font-size:12px}
+.iconBtn{width:34px;height:34px;border-radius:12px;border:1px solid var(--border);background:#f8fafc;cursor:pointer;font-weight:900}
+.iconBtn:hover{filter:brightness(.98)}
 
-.results{border:1px solid var(--border);border-radius:12px;max-height:220px;overflow:auto;background:#fff}
+.results{border:1px solid var(--border);border-radius:12px;max-height:240px;overflow:auto;background:#fff}
 .result{padding:8px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:10px}
 .result:last-child{border-bottom:none}
-.result .text{font-size:13px}
-.result .sub{font-size:12px;color:var(--muted)}
+.result .text{font-size:13px;line-height:1.25}
+.result .sub{font-size:12px;color:var(--muted);margin-top:3px}
 .result button{white-space:nowrap}
 
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -74,3 +74,4 @@ h4{margin:10px 0 6px 0;color:var(--muted)}
 
 .preview{margin-top:8px;border:1px solid var(--border);border-radius:12px;padding:10px;background:#fff;min-height:44px}
 
+.miniCard{margin-top:12px;border:1px solid var(--border);border-radius:14px;padding:12px;background:#fff}
