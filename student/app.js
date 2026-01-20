@@ -1,38 +1,39 @@
-// Robust GitHub Pages base-path handling + visible errors
+const CLASSES = ["12AA_SL","12AA_HL","12AI_SL","11AA_SL","11AA_HL","11AI_SL"];
 
-const plannerEl = document.getElementById("planner");
-const statusEl = document.getElementById("status");
 const classSelect = document.getElementById("classSelect");
+const thisWeekBtn = document.getElementById("thisWeekBtn");
+const todayLabel = document.getElementById("todayLabel");
 
-const CLASSES = [
-  "12AA_SL", "12AA_HL", "12AI_SL",
-  "11AA_SL", "11AA_HL", "11AI_SL"
-];
+const treeEl = document.getElementById("tree");
+const statusEl = document.getElementById("status");
 
-// Data caches
+const viewerEmpty = document.getElementById("viewerEmpty");
+const viewer = document.getElementById("viewer");
+const lessonTitle = document.getElementById("lessonTitle");
+const lessonMeta = document.getElementById("lessonMeta");
+const syllabusList = document.getElementById("syllabusList");
+const textbookList = document.getElementById("textbookList");
+const homeworkEl = document.getElementById("homework");
+const notesEl = document.getElementById("notes");
+
+let repoRoot = "";
 let syllabus = [];
 let textbooks = [];
+let plan = null;
 
-// ---------- boot ----------
-init().catch(err => showError(err));
+let collapsed = {
+  terms: {}, // termIndex -> true/false
+  weeks: {}  // `${tIdx}-${wIdx}` -> true/false
+};
+
+let selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
+
+init().catch(showError);
 
 async function init() {
-  setStatus("Loading data…");
+  repoRoot = getRepoRoot();
+  todayLabel.textContent = formatDateLocal(new Date());
 
-  // Compute repo root (works for https://user.github.io/repo/student/index.html)
-  const repoRoot = getRepoRoot();
-
-  // Build URLs safely
-  const syllabusUrl = new URL("data/syllabus_objectives.json", repoRoot).toString();
-  const textbooksUrl = new URL("data/textbook_references.json", repoRoot).toString();
-
-  // Load global datasets
-  [syllabus, textbooks] = await Promise.all([
-    loadJSON(syllabusUrl, "syllabus_objectives.json"),
-    loadJSON(textbooksUrl, "textbook_references.json"),
-  ]);
-
-  // Populate class dropdown
   classSelect.innerHTML = "";
   for (const c of CLASSES) {
     const opt = document.createElement("option");
@@ -41,270 +42,321 @@ async function init() {
     classSelect.appendChild(opt);
   }
 
-  classSelect.addEventListener("change", () => {
-    loadAndRenderSelected(repoRoot).catch(err => showError(err));
-  });
-
-  // Initial render
-  await loadAndRenderSelected(repoRoot);
-
+  setStatus("Loading reference data…");
+  [syllabus, textbooks] = await Promise.all([
+    loadJSON(new URL("data/syllabus_objectives.json", repoRoot).toString(), "syllabus_objectives.json"),
+    loadJSON(new URL("data/textbook_references.json", repoRoot).toString(), "textbook_references.json"),
+  ]);
   clearStatus();
+
+  classSelect.addEventListener("change", () => loadPlanAndRender().catch(showError));
+  thisWeekBtn.addEventListener("click", () => openThisWeek(true));
+
+  await loadPlanAndRender();
+
+  // Auto-open on first load
+  openThisWeek(false);
 }
 
-async function loadAndRenderSelected(repoRoot) {
+async function loadPlanAndRender() {
   const classId = classSelect.value || CLASSES[0];
   classSelect.value = classId;
 
   setStatus(`Loading plan: ${classId}…`);
-
-  const planUrl = new URL(`data/plans/${classId}.json`, repoRoot).toString();
-  const plan = await loadJSON(planUrl, `${classId}.json`);
-
-  renderPlan(plan);
-
+  plan = await loadJSON(new URL(`data/plans/${classId}.json`, repoRoot).toString(), `${classId}.json`);
   clearStatus();
-  await typesetMath();
+
+  // reset selection, keep collapse state
+  selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
+
+  renderTree();
+  renderLesson();
 }
 
-// ---------- rendering ----------
-function renderPlan(plan) {
-  plannerEl.innerHTML = "";
+function renderTree() {
+  treeEl.innerHTML = "";
+  if (!plan?.terms) return;
 
-  const header = document.createElement("div");
-  header.className = "planHeader";
-  header.innerHTML = `
-    <div class="planTitle">${escapeHtml(plan.label || plan.class_id || "Plan")}</div>
-    <div class="planMeta">
-      <span class="pill">${escapeHtml(plan.class_id || "")}</span>
-      ${plan.programme ? `<span class="pill">${escapeHtml(plan.programme)}</span>` : ""}
-      ${plan.level ? `<span class="pill">${escapeHtml(plan.level)}</span>` : ""}
-      ${Array.isArray(plan.years) ? `<span class="pill">${escapeHtml(plan.years.join(", "))}</span>` : ""}
-    </div>
-  `;
-  plannerEl.appendChild(header);
+  plan.terms.forEach((term, tIdx) => {
+    const termKey = String(tIdx);
+    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = false;
 
-  if (!plan.terms || plan.terms.length === 0) {
-    plannerEl.appendChild(infoBox("No terms found in this plan file."));
+    const termBox = document.createElement("div");
+    termBox.className = "treeItem";
+
+    const hdr = document.createElement("div");
+    hdr.className = "treeHdr";
+
+    const left = document.createElement("div");
+    left.innerHTML = `
+      <div class="treeTitle">${escapeHtml(term.label || term.term_id || `Term ${tIdx+1}`)}</div>
+      <div class="treeMeta">Term</div>
+    `;
+
+    const btn = document.createElement("button");
+    btn.className = "iconBtn";
+    btn.textContent = collapsed.terms[termKey] ? "+" : "−";
+    btn.title = collapsed.terms[termKey] ? "Expand" : "Collapse";
+    btn.onclick = () => {
+      collapsed.terms[termKey] = !collapsed.terms[termKey];
+      renderTree();
+    };
+
+    hdr.appendChild(left);
+    hdr.appendChild(btn);
+    termBox.appendChild(hdr);
+
+    if (!collapsed.terms[termKey]) {
+      const termChildren = document.createElement("div");
+      termChildren.className = "treeChildren";
+
+      (term.weeks || []).forEach((week, wIdx) => {
+        const wkKey = `${tIdx}-${wIdx}`;
+        if (collapsed.weeks[wkKey] === undefined) collapsed.weeks[wkKey] = false;
+
+        const weekBox = document.createElement("div");
+        weekBox.className = "treeItem";
+
+        const wh = document.createElement("div");
+        wh.className = "treeHdr";
+
+        const wLeft = document.createElement("div");
+        const dateLabel = week.start_date ? ` • starts ${escapeHtml(week.start_date)}` : "";
+        wLeft.innerHTML = `
+          <div class="treeTitle">${escapeHtml(week.label || week.week_id || `Week ${wIdx+1}`)}</div>
+          <div class="treeMeta">Week${dateLabel}</div>
+        `;
+
+        const wBtn = document.createElement("button");
+        wBtn.className = "iconBtn";
+        wBtn.textContent = collapsed.weeks[wkKey] ? "+" : "−";
+        wBtn.title = collapsed.weeks[wkKey] ? "Expand" : "Collapse";
+        wBtn.onclick = () => {
+          collapsed.weeks[wkKey] = !collapsed.weeks[wkKey];
+          renderTree();
+        };
+
+        wh.appendChild(wLeft);
+        wh.appendChild(wBtn);
+        weekBox.appendChild(wh);
+
+        if (!collapsed.weeks[wkKey]) {
+          const weekChildren = document.createElement("div");
+          weekChildren.className = "treeChildren";
+
+          (week.lessons || []).forEach((lesson, lIdx) => {
+            const item = document.createElement("button");
+            item.className = "btn";
+            item.style.width = "100%";
+            item.style.textAlign = "left";
+            item.textContent = lesson.title || `Lesson ${lIdx+1}`;
+            item.onclick = () => {
+              selected = { termIndex: tIdx, weekIndex: wIdx, lessonIndex: lIdx };
+              renderLesson();
+            };
+            weekChildren.appendChild(item);
+          });
+
+          weekBox.appendChild(weekChildren);
+        }
+
+        termChildren.appendChild(weekBox);
+      });
+
+      termBox.appendChild(termChildren);
+    }
+
+    treeEl.appendChild(termBox);
+  });
+}
+
+function renderLesson() {
+  const lesson = getSelectedLesson();
+  if (!lesson) {
+    viewerEmpty.classList.remove("hidden");
+    viewer.classList.add("hidden");
     return;
   }
 
-  for (const term of plan.terms) {
-    const termDetails = makeDetails("term", term.label || term.term_id || "Term");
-    const termBody = termDetails.querySelector(".detailsBody");
+  viewerEmpty.classList.add("hidden");
+  viewer.classList.remove("hidden");
 
-    if (!term.weeks || term.weeks.length === 0) {
-      termBody.appendChild(infoBox("No weeks added yet."));
-      plannerEl.appendChild(termDetails);
-      continue;
-    }
+  const { term, week } = getSelectedContext();
+  lessonTitle.textContent = lesson.title || "Lesson";
+  lessonMeta.textContent = `${term?.label || term?.term_id || ""} • ${week?.label || week?.week_id || ""}${week?.start_date ? ` • week starts ${week.start_date}` : ""}`;
 
-    for (const week of term.weeks) {
-      const weekDetails = makeDetails("week", week.label || week.week_id || "Week");
-      const weekBody = weekDetails.querySelector(".detailsBody");
+  // syllabus
+  syllabusList.innerHTML = "";
+  (lesson.syllabus_ids || []).forEach(id => {
+    const s = syllabus.find(x => x.id === id);
+    syllabusList.appendChild(renderSyllabusCard(id, s));
+  });
+  if ((lesson.syllabus_ids || []).length === 0) syllabusList.innerHTML = `<div class="info">No syllabus objectives attached.</div>`;
 
-      if (!week.lessons || week.lessons.length === 0) {
-        weekBody.appendChild(infoBox("No lessons added yet."));
-        termBody.appendChild(weekDetails);
-        continue;
-      }
+  // textbooks
+  textbookList.innerHTML = "";
+  (lesson.textbook_ids || []).forEach(id => {
+    const tb = textbooks.find(x => x.id === id);
+    textbookList.appendChild(renderTextbookCard(id, tb));
+  });
+  if ((lesson.textbook_ids || []).length === 0) textbookList.innerHTML = `<div class="info">No textbook references attached.</div>`;
 
-      for (const lesson of week.lessons) {
-        const lessonDetails = makeDetails("lesson", lesson.title || lesson.lesson_id || "Lesson");
-        const lessonBody = lessonDetails.querySelector(".detailsBody");
+  homeworkEl.textContent = lesson.homework?.trim() ? lesson.homework : "No homework set.";
+  notesEl.innerHTML = escapeHtml(lesson.notes_latex || "").replaceAll("\n", "<br/>");
 
-        // Syllabus
-        lessonBody.appendChild(renderList(
-          "Syllabus objectives",
-          (lesson.syllabus_ids || []).map(id => {
-            const obj = byId(syllabus, id);
-            return obj ? obj.text : `<span class="missing">Missing syllabus id: ${escapeHtml(id)}</span>`;
-          })
-        ));
-
-        // Textbook refs (link if URL)
-        lessonBody.appendChild(renderList(
-          "Textbook references",
-          (lesson.textbook_ids || []).map(id => {
-            const tb = byId(textbooks, id);
-            if (!tb) return `<span class="missing">Missing textbook id: ${escapeHtml(id)}</span>`;
-            const label = escapeHtml(tb.label || id);
-            const detail = tb.detail ? ` <span class="muted">— ${escapeHtml(tb.detail)}</span>` : "";
-            if (tb.url) {
-              const safeUrl = escapeAttr(tb.url);
-              return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${label}</a>${detail}`;
-            }
-            return `${label}${detail}`;
-          })
-        ));
-
-        // Homework
-        if (lesson.homework && String(lesson.homework).trim() !== "") {
-          lessonBody.appendChild(renderBlock("Homework", escapeHtml(String(lesson.homework))));
-        }
-
-        // Notes (LaTeX allowed)
-        if (lesson.notes_latex && String(lesson.notes_latex).trim() !== "") {
-          // Allow LaTeX to pass through; still escape dangerous HTML
-          lessonBody.appendChild(renderBlock("Notes", escapeHtmlAllowLatex(String(lesson.notes_latex))));
-        }
-
-        weekBody.appendChild(lessonDetails);
-      }
-
-      termBody.appendChild(weekDetails);
-    }
-
-    plannerEl.appendChild(termDetails);
-  }
+  typesetMath().catch(() => {});
 }
 
-function makeDetails(levelClass, titleText) {
-  const details = document.createElement("details");
-  details.className = `details ${levelClass}`;
-
-  // Terms default open; weeks/lessons closed
-  if (levelClass === "term") details.open = true;
-
-  const summary = document.createElement("summary");
-  summary.className = "summary";
-  summary.innerHTML = `<span class="summaryText">${escapeHtml(titleText)}</span>`;
-  details.appendChild(summary);
-
-  const body = document.createElement("div");
-  body.className = "detailsBody";
-  details.appendChild(body);
-
-  return details;
-}
-
-function renderList(title, itemsHtml) {
-  const wrap = document.createElement("div");
-  wrap.className = "block";
-
-  const h = document.createElement("div");
-  h.className = "blockTitle";
-  h.textContent = title;
-  wrap.appendChild(h);
-
-  if (!itemsHtml || itemsHtml.length === 0) {
-    wrap.appendChild(infoBox("None."));
-    return wrap;
-  }
-
-  const ul = document.createElement("ul");
-  ul.className = "list";
-  for (const item of itemsHtml) {
-    const li = document.createElement("li");
-    li.innerHTML = item; // already escaped / safe HTML
-    ul.appendChild(li);
-  }
-  wrap.appendChild(ul);
-
-  return wrap;
-}
-
-function renderBlock(title, htmlText) {
-  const wrap = document.createElement("div");
-  wrap.className = "block";
-
-  const h = document.createElement("div");
-  h.className = "blockTitle";
-  h.textContent = title;
-  wrap.appendChild(h);
-
-  const p = document.createElement("div");
-  p.className = "para";
-  p.innerHTML = htmlText;
-  wrap.appendChild(p);
-
-  return wrap;
-}
-
-function infoBox(text) {
+function renderSyllabusCard(id, s) {
   const div = document.createElement("div");
-  div.className = "info";
-  div.textContent = text;
+  div.className = "item";
+
+  const topic = s?.topic || "";
+  const section = s?.section || "";
+  const text = s?.text || "";
+
+  div.innerHTML = `
+    <div class="itemTop">
+      <div>
+        <div class="itemId">${escapeHtml(id)}</div>
+        <div class="itemSub">${escapeHtml(section)} • ${escapeHtml(topic)}</div>
+      </div>
+    </div>
+    <div class="itemText">${escapeHtml(text)}</div>
+  `;
   return div;
 }
 
-// ---------- fetch helpers ----------
-async function loadJSON(url, labelForErrors) {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`Failed to load ${labelForErrors}: ${res.status} ${res.statusText}\nURL: ${url}`);
+function renderTextbookCard(id, tb) {
+  const div = document.createElement("div");
+  div.className = "item";
+
+  const label = tb?.label || "";
+  const book = tb?.textbook || "";
+  const detail = tb?.detail || "";
+  const url = tb?.url || "";
+
+  div.innerHTML = `
+    <div class="itemTop">
+      <div>
+        <div class="itemId">${escapeHtml(id)}</div>
+        <div class="itemSub">${escapeHtml(book)} • ${escapeHtml(label)}</div>
+      </div>
+      ${url ? `<div><a href="${escapeAttr(url)}" target="_blank" rel="noopener">Open</a></div>` : ""}
+    </div>
+    <div class="itemText">${escapeHtml(detail)}</div>
+  `;
+  return div;
+}
+
+// ---- "This week" auto-open ----
+function openThisWeek(forceSelect) {
+  const today = startOfLocalDay(new Date());
+  const hit = findWeekContainingDate(today);
+
+  if (!hit) {
+    if (forceSelect) setStatus("No week found for today (missing start_date).", "error");
+    return;
   }
+
+  // expand term/week to show it
+  collapsed.terms[String(hit.tIdx)] = false;
+  collapsed.weeks[`${hit.tIdx}-${hit.wIdx}`] = false;
+
+  // select first lesson in that week if available
+  const week = plan.terms[hit.tIdx].weeks[hit.wIdx];
+  const hasLesson = (week.lessons || []).length > 0;
+
+  if (hasLesson) {
+    selected = { termIndex: hit.tIdx, weekIndex: hit.wIdx, lessonIndex: 0 };
+  } else {
+    selected = { termIndex: hit.tIdx, weekIndex: hit.wIdx, lessonIndex: null };
+  }
+
+  renderTree();
+  renderLesson();
+
+  if (forceSelect) {
+    setStatus(`Opened: ${plan.terms[hit.tIdx].label || "Term"} / ${week.label || "Week"} (this week).`, "ok");
+    setTimeout(clearStatus, 1800);
+  }
+}
+
+function findWeekContainingDate(dateLocalDay) {
+  if (!plan?.terms) return null;
+
+  for (let tIdx = 0; tIdx < plan.terms.length; tIdx++) {
+    const term = plan.terms[tIdx];
+    const weeks = term.weeks || [];
+    for (let wIdx = 0; wIdx < weeks.length; wIdx++) {
+      const w = weeks[wIdx];
+      if (!w.start_date) continue;
+
+      const start = parseISODateLocal(w.start_date);
+      if (!start) continue;
+
+      const end = addDays(start, 7);
+      if (dateLocalDay >= start && dateLocalDay < end) return { tIdx, wIdx };
+    }
+  }
+  return null;
+}
+
+// ---- selection helpers ----
+function getSelectedContext() {
+  const term = (plan?.terms || [])[selected.termIndex] || null;
+  const week = (term?.weeks || [])[selected.weekIndex] || null;
+  return { term, week };
+}
+function getSelectedLesson() {
+  const { week } = getSelectedContext();
+  if (!week) return null;
+  if (selected.lessonIndex === null) return null;
+  return (week.lessons || [])[selected.lessonIndex] || null;
+}
+
+// ---- util ----
+async function loadJSON(url, label) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to load ${label}: ${res.status} ${res.statusText}\nURL: ${url}`);
   return await res.json();
 }
 
 function getRepoRoot() {
-  // Example paths:
-  // /myrepo/student/index.html -> root = /myrepo/
-  // /student/index.html (local) -> root = /
   const path = window.location.pathname;
-
   const idx = path.lastIndexOf("/student/");
-  if (idx >= 0) {
-    return window.location.origin + path.slice(0, idx + 1); // include trailing slash
-  }
-
-  // fallback: current directory's parent
+  if (idx >= 0) return window.location.origin + path.slice(0, idx + 1);
   const url = new URL(".", window.location.href);
   return url.toString();
 }
 
-function byId(arr, id) {
-  return arr.find(x => x && x.id === id);
-}
-
-// ---------- status / errors ----------
-function setStatus(msg) {
+function setStatus(msg, kind="info") {
   statusEl.hidden = false;
-  statusEl.className = "status";
+  statusEl.className = "status" + (kind==="error" ? " error" : kind==="ok" ? " ok" : "");
   statusEl.textContent = msg;
 }
-function clearStatus() {
-  statusEl.hidden = true;
-  statusEl.textContent = "";
-}
-function showError(err) {
-  statusEl.hidden = false;
-  statusEl.className = "status error";
-  statusEl.textContent = (err && err.message) ? err.message : String(err);
-  console.error(err);
-}
+function clearStatus(){ statusEl.hidden = true; statusEl.textContent=""; }
+function showError(err){ console.error(err); setStatus(err?.message || String(err), "error"); }
 
-// ---------- MathJax ----------
-async function typesetMath() {
-  // MathJax may not be ready immediately; do not crash
+async function typesetMath(){
   try {
-    if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
-      await window.MathJax.typesetPromise();
-    }
-  } catch (e) {
-    // ignore math rendering errors; keep app functional
-    console.warn("MathJax typeset failed:", e);
-  }
+    if (window.MathJax?.typesetPromise) await window.MathJax.typesetPromise();
+  } catch {}
 }
 
-// ---------- escaping ----------
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+function escapeHtml(s){
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
 }
+function escapeAttr(s){ return escapeHtml(s); }
 
-// Allow LaTeX delimiters and backslashes through, but still escape HTML tags.
-// (Your notes are LaTeX, not HTML, so this is safe.)
-function escapeHtmlAllowLatex(s) {
-  return escapeHtml(s)
-    // restore common LaTeX sequences after HTML escaping
-    .replaceAll("\\\\", "\\"); // keep backslashes from double-escaping look
+function startOfLocalDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function parseISODateLocal(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso).trim());
+  if (!m) return null;
+  const y = Number(m[1]), mo = Number(m[2]) - 1, da = Number(m[3]);
+  return new Date(y, mo, da);
 }
-
-function escapeAttr(s) {
-  // minimal attribute escaping for URLs
-  return String(s).replaceAll('"', "%22").replaceAll("'", "%27");
+function addDays(d, n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+function formatDateLocal(d){
+  return d.toLocaleDateString(undefined, { weekday:"long", year:"numeric", month:"short", day:"numeric" });
 }
