@@ -3,13 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>IB Course Planner (Student)</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>IB Course Planner</title>
+  <link rel="stylesheet" href="./styles.css" />
 
-  <!-- MathJax (optional nice-to-have in lesson notes_latex preview) -->
+  <!-- MathJax (optional, for teacher notes / latex blocks shown to students) -->
   <script>
     window.MathJax = {
-      tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] },
+      tex: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]],
+        displayMath: [["$$","$$"], ["\\[","\\]"]]
+      },
       svg: { fontCache: "global" }
     };
   </script>
@@ -18,70 +21,71 @@
 
 <body>
   <header class="topbar">
-    <div class="topbarLeft">
-      <h1>IB Course Planner</h1>
-      <div class="badge">Student view</div>
-    </div>
+    <div class="topbarInner">
+      <div class="brand">
+        <div class="brandTitle">IB Course Planner</div>
+        <div class="brandSub">Student view</div>
+      </div>
 
-    <div class="topbarRight">
-      <label class="smallLabel" for="classSelect">Class</label>
-      <select id="classSelect"></select>
-      <button id="openThisWeekBtn" class="btn">Open This Week</button>
+      <div class="topbarRight">
+        <label class="field">
+          <span class="fieldLabel">Class</span>
+          <select id="classSelect"></select>
+        </label>
+
+        <button id="openThisWeekBtn" class="btn">Open this week</button>
+      </div>
     </div>
   </header>
 
   <main class="layout">
+    <!-- Status message (created automatically by JS if missing, but keep it here) -->
+    <div id="status" class="status" hidden></div>
+
     <aside class="sidebar">
-      <div class="panel">
-        <div class="panelTitle">Plan</div>
-        <div id="tree"></div>
+      <div class="panelTitle">Plan</div>
+      <div id="tree" class="tree"></div>
+      <div class="hint">
+        Tip: terms and weeks can expand/collapse. Pick a lesson to see details.
       </div>
     </aside>
 
     <section class="content">
-      <div id="status" class="status" hidden></div>
-
-      <div class="panel">
-        <div class="panelTitle">Lesson</div>
-        <div id="lessonView">
-          <div class="muted">Select a lesson from a week to view details.</div>
+      <div class="contentGrid">
+        <!-- Lesson details -->
+        <div class="panel">
+          <div class="panelTitle">Lesson</div>
+          <div id="lessonView" class="lessonView"></div>
         </div>
-      </div>
 
-      <div class="panel">
-        <div class="panelTitle">Your notes (saved on this device)</div>
+        <!-- Student notes -->
+        <div class="panel">
+          <div class="panelTitle">Your notes</div>
 
-        <div class="notesGrid">
-          <div class="notesCol">
-            <label class="smallLabel" for="studentNotesText">Text notes</label>
-            <textarea id="studentNotesText" placeholder="Write reminders, steps, exam hints…"></textarea>
-            <div class="muted tiny">
-              Auto-saves locally for this lesson.
-            </div>
-          </div>
+          <div class="studentNotesPanel">
+            <textarea
+              id="studentNotesText"
+              placeholder="Write reminders/notes for this lesson…"
+            ></textarea>
 
-          <div class="notesCol">
-            <div class="canvasHdr">
-              <div>
-                <div class="smallLabel">Sketch</div>
-                <div class="muted tiny">Stylus/mouse supported • saved as SVG</div>
-              </div>
-
-              <div class="toolRow">
-                <button class="toolBtn colorBtn active" data-color="#111111" title="Black">Black</button>
-                <button class="toolBtn colorBtn" data-color="#1f5cff" title="Blue">Blue</button>
-                <button class="toolBtn colorBtn" data-color="#e53935" title="Red">Red</button>
-
-                <span class="toolSep"></span>
-
-                <button class="toolBtn" id="eraserBtn" title="Eraser">Eraser</button>
-                <button class="toolBtn danger" id="clearCanvasBtn" title="Clear all">Clear all</button>
-              </div>
+            <div class="canvasWrap" id="canvasWrap">
+              <svg id="sketchSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+              <div class="canvasResizer" id="canvasResizer" title="Drag to resize"></div>
             </div>
 
-            <div class="canvasWrap">
-              <svg id="sketchSvg" class="sketchSvg" xmlns="http://www.w3.org/2000/svg"></svg>
-              <div class="muted tiny canvasHint">Draw directly on the canvas.</div>
+            <div class="canvasTools">
+              <button class="colorBtn active" data-color="#111111" type="button">Black</button>
+              <button class="colorBtn" data-color="#1f4fff" type="button">Blue</button>
+              <button class="colorBtn" data-color="#d22c2c" type="button">Red</button>
+
+              <div class="spacer"></div>
+
+              <button id="eraserBtn" type="button">Eraser</button>
+              <button id="clearCanvasBtn" type="button">Clear all</button>
+            </div>
+
+            <div class="hint">
+              Notes + drawings are saved on <strong>this device</strong> (local storage) per lesson.
             </div>
           </div>
         </div>
@@ -89,6 +93,6 @@
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
