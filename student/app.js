@@ -1,14 +1,13 @@
-const treeEl = document.getElementById("tree");
-const statusEl = document.getElementById("status");
-const classSelect = document.getElementById("classSelect");
-const openThisWeekBtn = document.getElementById("openThisWeekBtn");
+document.addEventListener("DOMContentLoaded", () => {
+  init().catch(showError);
+});
 
-const lessonView = document.getElementById("lessonView");
+function $(id) {
+  return document.getElementById(id);
+}
 
-const studentNotesText = document.getElementById("studentNotesText");
-const sketchSvg = document.getElementById("sketchSvg");
-const clearCanvasBtn = document.getElementById("clearCanvasBtn");
-const eraserBtn = document.getElementById("eraserBtn");
+let treeEl, statusEl, classSelect, openThisWeekBtn, lessonView;
+let studentNotesText, sketchSvg, clearCanvasBtn, eraserBtn;
 
 const CLASSES = ["12AA_SL","12AA_HL","12AI_SL","11AA_SL","11AA_HL","11AI_SL"];
 
@@ -18,8 +17,6 @@ let textbooks = [];
 let plan = null;
 
 let selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
-
-// default collapsed
 let collapsed = { terms: {}, weeks: {} };
 
 // -------- Student notes state (per lesson) ----------
@@ -40,11 +37,39 @@ let drawing = {
   lastPt: null
 };
 
-init().catch(showError);
-
 async function init() {
+  // Grab elements (don’t assume they exist)
+  treeEl = $("tree");
+  statusEl = $("status");
+  classSelect = $("classSelect");
+  openThisWeekBtn = $("openThisWeekBtn");
+  lessonView = $("lessonView");
+
+  studentNotesText = $("studentNotesText");
+  sketchSvg = $("sketchSvg");
+  clearCanvasBtn = $("clearCanvasBtn");
+  eraserBtn = $("eraserBtn");
+
+  // If status element is missing, create it to avoid crashes
+  if (!statusEl) {
+    statusEl = document.createElement("div");
+    statusEl.id = "status";
+    statusEl.className = "status";
+    statusEl.hidden = true;
+
+    // Put it at top of main content if possible, else body top
+    const main = document.querySelector("main") || document.body;
+    main.prepend(statusEl);
+  }
+
+  // Validate required core UI
+  if (!classSelect) throw new Error("Missing #classSelect in student/index.html");
+  if (!treeEl) throw new Error("Missing #tree in student/index.html");
+  if (!lessonView) throw new Error("Missing #lessonView in student/index.html");
+
   repoRoot = getRepoRoot();
 
+  // Populate class dropdown
   classSelect.innerHTML = "";
   for (const c of CLASSES) {
     const opt = document.createElement("option");
@@ -61,23 +86,27 @@ async function init() {
   clearStatus();
 
   classSelect.addEventListener("change", () => loadPlanAndRender().catch(showError));
-  openThisWeekBtn.addEventListener("click", () => openThisWeek());
+  if (openThisWeekBtn) openThisWeekBtn.addEventListener("click", () => openThisWeek());
 
   // Notes autosave
-  studentNotesText.addEventListener("input", () => {
-    if (!currentLessonKey) return;
-    localStorage.setItem(lsKeyText(currentLessonKey), studentNotesText.value || "");
-  });
+  if (studentNotesText) {
+    studentNotesText.addEventListener("input", () => {
+      if (!currentLessonKey) return;
+      localStorage.setItem(lsKeyText(currentLessonKey), studentNotesText.value || "");
+    });
+  }
 
-  // Sketch tools
-  setupToolButtons();
-  setupSketchCanvas();
+  // Sketch tools (only if canvas exists)
+  if (sketchSvg && clearCanvasBtn && eraserBtn) {
+    setupToolButtons();
+    setupSketchCanvas();
 
-  clearCanvasBtn.addEventListener("click", () => {
-    if (!currentLessonKey) return;
-    sketchSvg.innerHTML = "";
-    saveSketch();
-  });
+    clearCanvasBtn.addEventListener("click", () => {
+      if (!currentLessonKey) return;
+      sketchSvg.innerHTML = "";
+      saveSketch();
+    });
+  }
 
   await loadPlanAndRender();
 }
@@ -92,11 +121,11 @@ async function loadPlanAndRender() {
   clearStatus();
 
   selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
-  collapsed = { terms: {}, weeks: {} }; // reset so everything starts unexpanded
+  collapsed = { terms: {}, weeks: {} }; // everything starts collapsed
 
   renderTree();
   renderLesson();
-  loadStudentNotesForSelection(); // will clear
+  loadStudentNotesForSelection();
 }
 
 // ---------- Tree ----------
@@ -106,7 +135,7 @@ function renderTree() {
 
   plan.terms.forEach((term, tIdx) => {
     const termKey = String(tIdx);
-    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true; // start collapsed
+    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true; // collapsed
 
     const termBox = document.createElement("div");
     termBox.className = "treeItem";
@@ -143,7 +172,7 @@ function renderTree() {
 
       (term.weeks || []).forEach((week, wIdx) => {
         const wkKey = `${tIdx}-${wIdx}`;
-        if (collapsed.weeks[wkKey] === undefined) collapsed.weeks[wkKey] = true; // start collapsed
+        if (collapsed.weeks[wkKey] === undefined) collapsed.weeks[wkKey] = true;
 
         const weekBox = document.createElement("div");
         weekBox.className = "treeItem";
@@ -255,7 +284,6 @@ function renderLesson() {
 
 function formatTeacherNotes(s){
   if (!s) return "<span class='muted'>—</span>";
-  // Keep it simple: show raw latex text; MathJax will render inline math
   const escaped = escapeHtml(s).replaceAll("\n","<br/>");
   return `<div>${escaped}</div>`;
 }
@@ -278,7 +306,7 @@ function openThisWeek(){
 
   renderTree();
   renderLesson();
-  loadStudentNotesForSelection(); // clears, since no lesson selected
+  loadStudentNotesForSelection();
   clearStatus();
 }
 
@@ -298,10 +326,7 @@ function findThisWeekIndex(){
       if (!start) continue;
       const end = new Date(start);
       end.setDate(end.getDate()+7);
-
-      if (today >= start && today < end){
-        return { tIdx, wIdx };
-      }
+      if (today >= start && today < end) return { tIdx, wIdx };
     }
   }
   return null;
@@ -315,30 +340,25 @@ function parseISODate(s){
   return d;
 }
 
-// ---------- Student local notes: text + svg ----------
+// ---------- Student local notes ----------
 function loadStudentNotesForSelection(){
   const lesson = getSelectedLesson();
   if (!lesson) {
     currentLessonKey = null;
-    studentNotesText.value = "";
-    sketchSvg.innerHTML = "";
+    if (studentNotesText) studentNotesText.value = "";
+    if (sketchSvg) sketchSvg.innerHTML = "";
     return;
   }
 
   currentLessonKey = makeLessonStorageKey();
 
-  // load text
-  const txt = localStorage.getItem(lsKeyText(currentLessonKey)) || "";
-  studentNotesText.value = txt;
+  if (studentNotesText) {
+    studentNotesText.value = localStorage.getItem(lsKeyText(currentLessonKey)) || "";
+  }
 
-  // load svg
-  const svg = localStorage.getItem(lsKeySvg(currentLessonKey)) || "";
-  if (svg) {
-    // Replace the entire SVG contents safely: parse as text and extract children
-    // We store only the inner markup of the SVG for simplicity.
-    sketchSvg.innerHTML = svg;
-  } else {
-    sketchSvg.innerHTML = "";
+  if (sketchSvg) {
+    const svg = localStorage.getItem(lsKeySvg(currentLessonKey)) || "";
+    sketchSvg.innerHTML = svg || "";
   }
 }
 
@@ -347,11 +367,9 @@ function makeLessonStorageKey(){
   const term = getSelectedTerm();
   const week = getSelectedWeek();
   const lesson = getSelectedLesson();
-
   const t = term?.term_id || `T${selected.termIndex+1}`;
   const w = week?.week_id || `W${selected.weekIndex+1}`;
   const l = lesson?.lesson_id || `L${selected.lessonIndex+1}`;
-
   return `${classId}::${t}::${w}::${l}`;
 }
 
@@ -359,14 +377,12 @@ function lsKeyText(k){ return `planner_student_text::${k}`; }
 function lsKeySvg(k){ return `planner_student_svg::${k}`; }
 
 function saveSketch(){
-  if (!currentLessonKey) return;
-  // Store only the inner contents (paths) to avoid width/height differences
+  if (!currentLessonKey || !sketchSvg) return;
   localStorage.setItem(lsKeySvg(currentLessonKey), sketchSvg.innerHTML || "");
 }
 
-// ---------- Sketch canvas (SVG) ----------
+// ---------- Sketch canvas ----------
 function setupToolButtons(){
-  // color buttons
   const colorBtns = document.querySelectorAll(".colorBtn");
   colorBtns.forEach(btn => {
     btn.addEventListener("click", () => {
@@ -386,7 +402,6 @@ function setupToolButtons(){
 }
 
 function setupSketchCanvas(){
-  // Ensure viewBox matches rendered size
   const syncViewBox = () => {
     const rect = sketchSvg.getBoundingClientRect();
     const w = Math.max(1, Math.floor(rect.width));
@@ -423,19 +438,15 @@ function setupSketchCanvas(){
   sketchSvg.addEventListener("pointermove", (e) => {
     if (!drawing.isDown || !drawing.currentPathEl) return;
     const p = svgPoint(e);
-
-    // Simple smoothing: quadratic curve between last and new
     const lp = drawing.lastPt;
     const mx = (lp.x + p.x) / 2;
     const my = (lp.y + p.y) / 2;
-
     drawing.d += ` Q ${lp.x} ${lp.y} ${mx} ${my}`;
     drawing.currentPathEl.setAttribute("d", drawing.d);
-
     drawing.lastPt = p;
   });
 
-  const end = (e) => {
+  const end = () => {
     if (!drawing.isDown) return;
     drawing.isDown = false;
     drawing.currentPathEl = null;
@@ -454,10 +465,8 @@ function svgPoint(e){
   const vb = sketchSvg.viewBox.baseVal;
   const sx = vb.width / rect.width;
   const sy = vb.height / rect.height;
-
   const x = (e.clientX - rect.left) * sx;
   const y = (e.clientY - rect.top) * sy;
-
   return { x: round2(x), y: round2(y) };
 }
 
@@ -491,12 +500,20 @@ function getRepoRoot() {
 }
 
 function setStatus(msg, kind="info") {
+  if (!statusEl) return;
   statusEl.hidden = false;
   statusEl.className = "status" + (kind==="error" ? " error" : kind==="ok" ? " ok" : "");
   statusEl.textContent = msg;
 }
-function clearStatus(){ statusEl.hidden = true; statusEl.textContent=""; }
-function showError(err){ console.error(err); setStatus(err?.message || String(err), "error"); }
+function clearStatus(){
+  if (!statusEl) return;
+  statusEl.hidden = true;
+  statusEl.textContent = "";
+}
+function showError(err){
+  console.error(err);
+  setStatus(err?.message || String(err), "error");
+}
 
 async function typesetMath(){
   try { if (window.MathJax?.typesetPromise) await window.MathJax.typesetPromise(); } catch {}
