@@ -53,7 +53,6 @@ async function init() {
   clearCanvasBtn = $("clearCanvasBtn");
   eraserBtn = $("eraserBtn");
 
-  // Create status element if missing (prevents crashes)
   if (!statusEl) {
     statusEl = document.createElement("div");
     statusEl.id = "status";
@@ -62,7 +61,6 @@ async function init() {
     (document.querySelector("main") || document.body).prepend(statusEl);
   }
 
-  // Required core UI
   if (!classSelect) throw new Error("Missing #classSelect in student/index.html");
   if (!treeEl) throw new Error("Missing #tree in student/index.html");
   if (!lessonView) throw new Error("Missing #lessonView in student/index.html");
@@ -100,7 +98,7 @@ async function init() {
   if (sketchSvg && clearCanvasBtn && eraserBtn) {
     setupToolButtons();
     setupSketchCanvas();
-    if (canvasWrap && canvasResizer) setupCanvasResizer();
+    setupCanvasResizer(); // ✅ always set up if elements exist
 
     clearCanvasBtn.addEventListener("click", () => {
       if (!currentLessonKey) return;
@@ -122,7 +120,7 @@ async function loadPlanAndRender() {
   clearStatus();
 
   selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
-  collapsed = { terms: {}, weeks: {} }; // all collapsed (unexpanded)
+  collapsed = { terms: {}, weeks: {} }; // all collapsed
 
   renderTree();
   renderLesson();
@@ -136,7 +134,7 @@ function renderTree() {
 
   plan.terms.forEach((term, tIdx) => {
     const termKey = String(tIdx);
-    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true; // collapsed by default
+    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true;
 
     const termBox = document.createElement("div");
     termBox.className = "treeItem";
@@ -306,7 +304,6 @@ function openThisWeek() {
   selected.weekIndex = wIdx;
   selected.lessonIndex = null;
 
-  // Expand the correct term + week so students land there
   collapsed.terms[String(tIdx)] = false;
   collapsed.weeks[`${tIdx}-${wIdx}`] = false;
 
@@ -318,9 +315,8 @@ function openThisWeek() {
 
 function findThisWeekIndex() {
   if (!plan?.terms) return null;
-
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  today.setHours(0,0,0,0);
 
   for (let tIdx = 0; tIdx < plan.terms.length; tIdx++) {
     const term = plan.terms[tIdx];
@@ -332,7 +328,6 @@ function findThisWeekIndex() {
       if (!start) continue;
       const end = new Date(start);
       end.setDate(end.getDate() + 7);
-
       if (today >= start && today < end) return { tIdx, wIdx };
     }
   }
@@ -343,7 +338,7 @@ function parseISODate(s) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
   if (!m) return null;
   const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  d.setHours(0, 0, 0, 0);
+  d.setHours(0,0,0,0);
   return d;
 }
 
@@ -366,10 +361,8 @@ function loadStudentNotesForSelection() {
   if (sketchSvg) {
     const svg = localStorage.getItem(lsKeySvg(currentLessonKey)) || "";
     sketchSvg.innerHTML = svg || "";
+    syncSketchViewBox();
   }
-
-  // keep viewBox synced after swapping content
-  if (window.syncSketchViewBox) window.syncSketchViewBox();
 }
 
 function makeLessonStorageKey() {
@@ -409,27 +402,21 @@ function setupToolButtons() {
   eraserBtn.addEventListener("click", () => {
     tool.mode = "eraser";
     eraserBtn.classList.add("active");
-    colorBtns.forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".colorBtn").forEach(b => b.classList.remove("active"));
   });
 }
 
 function setupSketchCanvas() {
-  const syncViewBox = () => {
-    const rect = sketchSvg.getBoundingClientRect();
-    const w = Math.max(1, Math.floor(rect.width));
-    const h = Math.max(1, Math.floor(rect.height));
-    sketchSvg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-  };
-
-  // expose so resizer can call it
-  window.syncSketchViewBox = syncViewBox;
-
-  syncViewBox();
-  window.addEventListener("resize", syncViewBox);
+  syncSketchViewBox();
+  window.addEventListener("resize", syncSketchViewBox);
 
   sketchSvg.addEventListener("pointerdown", (e) => {
+    // Don’t start drawing if user is grabbing the resizer bar region
+    if (isOnResizerBar(e)) return;
+
     if (!currentLessonKey) return;
     sketchSvg.setPointerCapture(e.pointerId);
+
     drawing.isDown = true;
     drawing.lastPt = svgPoint(e);
 
@@ -457,7 +444,6 @@ function setupSketchCanvas() {
     const lp = drawing.lastPt;
     const mx = (lp.x + p.x) / 2;
     const my = (lp.y + p.y) / 2;
-
     drawing.d += ` Q ${lp.x} ${lp.y} ${mx} ${my}`;
     drawing.currentPathEl.setAttribute("d", drawing.d);
     drawing.lastPt = p;
@@ -474,41 +460,59 @@ function setupSketchCanvas() {
 
   sketchSvg.addEventListener("pointerup", end);
   sketchSvg.addEventListener("pointercancel", end);
-  sketchSvg.addEventListener("pointerleave", end);
+}
+
+function isOnResizerBar(e) {
+  if (!canvasWrap) return false;
+  const wrapRect = canvasWrap.getBoundingClientRect();
+  const yFromBottom = wrapRect.bottom - e.clientY;
+  return yFromBottom >= 0 && yFromBottom <= 26; // matches resizer height
 }
 
 function setupCanvasResizer() {
+  if (!canvasWrap || !canvasResizer) return;
+
+  const minH = 240;
+  const maxH = 2400; // ~3 pages
+
+  let dragging = false;
   let startY = 0;
   let startH = 0;
 
-  const minH = 240;
-  const maxH = 2400; // ~3 pages (tweak if desired)
-
   canvasResizer.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    canvasResizer.setPointerCapture(e.pointerId);
+    dragging = true;
     startY = e.clientY;
     startH = canvasWrap.getBoundingClientRect().height;
-
-    const onMove = (ev) => {
-      const dy = ev.clientY - startY;
-      let next = startH + dy;
-      next = Math.max(minH, Math.min(maxH, next));
-      canvasWrap.style.height = `${Math.round(next)}px`;
-      if (window.syncSketchViewBox) window.syncSketchViewBox();
-    };
-
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-      saveSketch();
-    };
-
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
+    canvasResizer.setPointerCapture(e.pointerId);
   });
+
+  window.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dy = e.clientY - startY;
+    let next = startH + dy;
+    next = Math.max(minH, Math.min(maxH, next));
+    canvasWrap.style.height = `${Math.round(next)}px`;
+    syncSketchViewBox();
+  });
+
+  const stop = () => {
+    if (!dragging) return;
+    dragging = false;
+    saveSketch();
+  };
+
+  window.addEventListener("pointerup", stop);
+  window.addEventListener("pointercancel", stop);
+}
+
+/* Keep SVG coordinate system synced to displayed size */
+function syncSketchViewBox() {
+  if (!sketchSvg) return;
+  const rect = sketchSvg.getBoundingClientRect();
+  const w = Math.max(1, Math.floor(rect.width));
+  const h = Math.max(1, Math.floor(rect.height));
+  sketchSvg.setAttribute("viewBox", `0 0 ${w} ${h}`);
 }
 
 function svgPoint(e) {
@@ -527,9 +531,7 @@ function svgPoint(e) {
 function round2(n) { return Math.round(n * 100) / 100; }
 
 /* ---------- Selected getters ---------- */
-function getSelectedTerm() {
-  return (plan?.terms || [])[selected.termIndex] || null;
-}
+function getSelectedTerm() { return (plan?.terms || [])[selected.termIndex] || null; }
 function getSelectedWeek() {
   const term = getSelectedTerm();
   return (term?.weeks || [])[selected.weekIndex] || null;
@@ -548,12 +550,9 @@ async function loadJSON(url, label) {
 }
 
 function getRepoRoot() {
-  // If we're at /.../student/index.html, return /.../
   const path = window.location.pathname;
   const idx = path.lastIndexOf("/student/");
   if (idx >= 0) return window.location.origin + path.slice(0, idx + 1);
-
-  // fallback
   return new URL(".", window.location.href).toString();
 }
 
