@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coverage (Syllabus)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="title">Coverage View</div>
+      <div class="subtitle">Unscheduled syllabus objectives</div>
+    </div>
+
+    <div class="controls">
+      <label class="label" for="classSelect">Class</label>
+      <select id="classSelect" class="select"></select>
+      <input id="search" class="input" placeholder="Search unscheduled (id/topic/text)..." />
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="status" class="status" hidden></div>
+
+    <section class="card">
+      <div class="row">
+        <div class="pill"><strong>Total objectives:</strong> <span id="totalCount"></span></div>
+        <div class="pill"><strong>Scheduled:</strong> <span id="scheduledCount"></span></div>
+        <div class="pill"><strong>Unscheduled:</strong> <span id="unscheduledCount"></span></div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:12px;">
+      <h2>Unscheduled</h2>
+      <div id="list" class="list"></div>
+    </section>
+  </main>
+
+  <script defer src="app.js"></script>
+</body>
+</html>
