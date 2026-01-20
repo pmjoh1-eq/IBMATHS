@@ -28,7 +28,11 @@
 
     { "term_id": "T2", "label": "Term 2", "weeks": [] },
     { "term_id": "T3", "label": "Term 3", "weeks": [] },
-    { "term_id": "T4", "label": "Term 4", "weeks": [] }
+    { "term_id": "T4", "label": "Term 4", "weeks": [] },
+    { "term_id": "T5", "label": "Term 5", "weeks": [] },
+    { "term_id": "T6", "label": "Term 6", "weeks": [] },
+    { "term_id": "T7", "label": "Term 7", "weeks": [] },
+    { "term_id": "T8", "label": "Term 8", "weeks": [] }
   ]
 }
 
