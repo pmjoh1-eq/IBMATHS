@@ -954,4 +954,4 @@
     "text": "Solutions of $\\dfrac{d^2 x}{dt^2} = f(x, \\dfrac{dx}{dt}, t)$ by Euler's method."
   }
 
-];
+]
