@@ -79,7 +79,7 @@ function renderTree() {
 
   plan.terms.forEach((term, tIdx) => {
     const termKey = String(tIdx);
-    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = false;
+    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true;
 
     const termBox = document.createElement("div");
     termBox.className = "treeItem";
