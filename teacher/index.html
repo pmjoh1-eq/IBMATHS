@@ -1,1 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Planner Editor (Teacher)</title>
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Optional MathJax (for previewing LaTeX in lesson notes). App still works without it. -->
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$', '$']] }, svg: { fontCache: 'global' } };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="title">Planner Editor (Teacher)</div>
+      <div class="subtitle">Edit plans • Attach syllabus + textbooks • Commit to GitHub</div>
+    </div>
+
+    <div class="controls">
+      <label class="label" for="classSelect">Class</label>
+      <select id="classSelect" class="select"></select>
+
+      <button id="downloadBtn" class="btn">Download JSON</button>
+      <button id="commitBtn" class="btn primary">Commit to GitHub</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="status" class="status" hidden></div>
+
+    <section class="card">
+      <h2>GitHub Settings (stored locally in this browser)</h2>
+      <div class="grid">
+        <div>
+          <label class="fieldLabel">Repo owner</label>
+          <input id="ghOwner" class="input" placeholder="e.g. patrickjohnson" />
+        </div>
+        <div>
+          <label class="fieldLabel">Repo name</label>
+          <input id="ghRepo" class="input" placeholder="e.g. year-planner" />
+        </div>
+        <div>
+          <label class="fieldLabel">Branch</label>
+          <input id="ghBranch" class="input" placeholder="main" />
+        </div>
+        <div>
+          <label class="fieldLabel">Token (fine-grained PAT)</label>
+          <input id="ghToken" class="input" placeholder="github_pat_…" type="password" />
+        </div>
+      </div>
+      <p class="hint">
+        Token needs <strong>Contents: Read/Write</strong> access for this repo.
+        This page saves these fields in <code>localStorage</code> on your device only.
+      </p>
+      <button id="saveGhBtn" class="btn">Save GitHub Settings</button>
+    </section>
+
+    <section class="layout">
+      <aside class="sidebar card">
+        <h2>Structure</h2>
+        <div id="tree"></div>
+        <button id="addWeekBtn" class="btn full">+ Add Week to Selected Term</button>
+        <button id="addLessonBtn" class="btn full">+ Add Lesson to Selected Week</button>
+      </aside>
+
+      <section class="editor card">
+        <h2>Lesson Editor</h2>
+        <div id="editorEmpty" class="info">Select a lesson to edit.</div>
+
+        <div id="editorForm" class="hidden">
+          <div class="row">
+            <div class="col">
+              <label class="fieldLabel">Lesson title</label>
+              <input id="lessonTitle" class="input" />
+            </div>
+            <div class="col actions">
+              <button id="moveUpBtn" class="btn">↑ Move Up</button>
+              <button id="moveDownBtn" class="btn">↓ Move Down</button>
+              <button id="deleteLessonBtn" class="btn danger">Delete</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label class="fieldLabel">Homework</label>
+              <input id="lessonHomework" class="input" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label class="fieldLabel">Notes (LaTeX allowed)</label>
+              <textarea id="lessonNotes" class="textarea" rows="5"></textarea>
+              <button id="previewMathBtn" class="btn small">Preview Math</button>
+              <div id="notesPreview" class="preview"></div>
+            </div>
+          </div>
+
+          <hr class="sep"/>
+
+          <div class="row">
+            <div class="col">
+              <h3>Syllabus objectives</h3>
+              <input id="syllabusSearch" class="input" placeholder="Search syllabus (id, section, topic, text)..." />
+              <div id="syllabusResults" class="results"></div>
+              <h4>Selected</h4>
+              <div id="syllabusSelected" class="chips"></div>
+            </div>
+
+            <div class="col">
+              <h3>Textbook references</h3>
+              <input id="textbookSearch" class="input" placeholder="Search textbooks (id, label, detail, book)..." />
+              <div id="textbookResults" class="results"></div>
+              <h4>Selected</h4>
+              <div id="textbookSelected" class="chips"></div>
+            </div>
+          </div>
+
+          <div class="row">
+            <button id="applyLessonBtn" class="btn primary">Apply Changes to Plan</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script defer src="app.js"></script>
+</body>
+</html>
 
