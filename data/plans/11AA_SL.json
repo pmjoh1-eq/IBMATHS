@@ -1,1 +1,34 @@
+{
+  "class_id": "11AA_SL",
+  "label": "Year 11 AA SL",
+  "programme": "AA",
+  "level": "SL",
+  "years": [2026],
+  "terms": [
+    {
+      "term_id": "T1",
+      "label": "Term 1",
+      "weeks": [
+        {
+          "week_id": "T1-W1",
+          "label": "Week 1",
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Scientific Notation",
+              "syllabus_ids": ["AA_SL_1-1"],
+              "textbook_ids": ["tb-23"],
+              "homework": "Core SL Ch 3 Ex 3A Q1–10",
+              "notes_latex": "Recall that $a \\times 10^k$ represents scientific notation."
+            }
+          ]
+        }
+      ]
+    },
+
+    { "term_id": "T2", "label": "Term 2", "weeks": [] },
+    { "term_id": "T3", "label": "Term 3", "weeks": [] },
+    { "term_id": "T4", "label": "Term 4", "weeks": [] }
+  ]
+}
 
