@@ -3,8 +3,7 @@
     id: "tb-0",
     textbook: "AA-SL",
     label: "Haese IB AA SL – Ch 1: The Binomial Theorem",
-    detail:
-      "Factorial notation, binomial expansions, the binomial theorem and related problem solving.",
+    detail:"Factorial notation, binomial expansions, the binomial theorem and related problem solving.",
     url: "https://snowflake.haesemathematics.com.au/viewer/mathematics-analysis-and-approaches-sl/book/ibsl-aaa-2/15"
   },
   {
