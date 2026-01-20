@@ -25,29 +25,16 @@ body {
   align-items: center;
   justify-content: space-between;
 }
-.brandTitle {
-  font-size: 18px;
-  font-weight: 700;
-}
-.brandSub {
-  font-size: 12px;
-  opacity: 0.9;
-  margin-top: 2px;
-}
+.brandTitle { font-size: 18px; font-weight: 700; }
+.brandSub { font-size: 12px; opacity: 0.9; margin-top: 2px; }
 .topbarRight {
   display: flex;
   align-items: end;
   gap: 10px;
   flex-wrap: wrap;
 }
-.field {
-  display: grid;
-  gap: 6px;
-}
-.fieldLabel {
-  font-size: 12px;
-  opacity: 0.95;
-}
+.field { display: grid; gap: 6px; }
+.fieldLabel { font-size: 12px; opacity: 0.95; }
 select {
   height: 36px;
   border-radius: 10px;
@@ -58,7 +45,6 @@ select {
   outline: none;
 }
 select option { color: #0b1220; }
-
 .btn {
   height: 36px;
   border-radius: 10px;
@@ -95,34 +81,23 @@ select option { color: #0b1220; }
   top: 74px;
 }
 
-.content {
-  min-width: 0;
-}
+.content { min-width: 0; }
 
+/* ✅ IMPORTANT: single-column stack so "Your notes" is UNDER "Lesson" */
 .contentGrid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: 1fr;
   gap: 12px;
 }
 
 @media (max-width: 980px) {
   .layout { grid-template-columns: 1fr; }
   .sidebar { position: relative; top: 0; height: auto; }
-  .contentGrid { grid-template-columns: 1fr; }
 }
 
-.panel {
-  padding: 12px;
-}
-.panelTitle {
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-.hint {
-  margin-top: 10px;
-  font-size: 12px;
-  color: #5c6477;
-}
+.panel { padding: 12px; }
+.panelTitle { font-weight: 700; margin-bottom: 10px; }
+.hint { margin-top: 10px; font-size: 12px; color: #5c6477; }
 
 /* ---------- Status ---------- */
 .status {
@@ -134,50 +109,21 @@ select option { color: #0b1220; }
   box-shadow: 0 1px 2px rgba(12, 18, 40, 0.06);
   color: #0b1220;
 }
-.status.error {
-  border-color: #f2b8b5;
-  background: #fff5f5;
-  color: #8a1f1b;
-}
-.status.ok {
-  border-color: #b7e2c2;
-  background: #f3fff6;
-  color: #0f5b2a;
-}
+.status.error { border-color: #f2b8b5; background: #fff5f5; color: #8a1f1b; }
+.status.ok { border-color: #b7e2c2; background: #f3fff6; color: #0f5b2a; }
 
 /* ---------- Tree ---------- */
 .tree { display: grid; gap: 10px; }
-
 .treeItem {
   border: 1px solid #e6e8f0;
   border-radius: 12px;
   padding: 10px;
   background: #fff;
 }
-
-.treeHdr {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.treeHdrLeft {
-  cursor: pointer;
-  min-width: 0;
-}
-.treeTitle {
-  font-weight: 700;
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.treeMeta {
-  font-size: 12px;
-  color: #5c6477;
-  margin-top: 2px;
-}
+.treeHdr { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.treeHdrLeft { cursor: pointer; min-width: 0; }
+.treeTitle { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.treeMeta { font-size: 12px; color: #5c6477; margin-top: 2px; }
 
 .iconBtn {
   width: 34px;
@@ -190,13 +136,7 @@ select option { color: #0b1220; }
 }
 .iconBtn:hover { background: #eef1fb; }
 
-.treeChildren {
-  margin-top: 10px;
-  padding-left: 10px;
-  display: grid;
-  gap: 10px;
-}
-
+.treeChildren { margin-top: 10px; padding-left: 10px; display: grid; gap: 10px; }
 .lessonBtn {
   width: 100%;
   text-align: left;
@@ -207,10 +147,7 @@ select option { color: #0b1220; }
   cursor: pointer;
 }
 .lessonBtn:hover { background: #f7f8fc; }
-.lessonBtn.active {
-  border-color: #0b4f6c;
-  background: #eef7fb;
-}
+.lessonBtn.active { border-color: #0b4f6c; background: #eef7fb; }
 
 /* ---------- Lesson view ---------- */
 .lessonView .muted { color: #5c6477; }
@@ -230,7 +167,6 @@ select option { color: #0b1220; }
 .kv:last-child { border-bottom: 0; }
 .k { font-weight: 700; color: #26304a; font-size: 13px; }
 .v { font-size: 13px; line-height: 1.35; min-width: 0; }
-
 .list { margin: 8px 0 0; padding-left: 18px; }
 .list li { margin: 6px 0; }
 
@@ -243,10 +179,10 @@ select option { color: #0b1220; }
 
 #studentNotesText {
   width: 100%;
-  min-height: 90px;   /* starts shorter */
+  min-height: 90px;
   height: 90px;
   max-height: 900px;
-  resize: vertical;   /* vertical only */
+  resize: vertical;
   padding: 10px 12px;
   border: 1px solid #d0d5dd;
   border-radius: 10px;
@@ -255,31 +191,51 @@ select option { color: #0b1220; }
   background: #fff;
 }
 
-/* Canvas wrapper + handle for vertical resizing only */
+/* Canvas wrapper + handle for vertical resizing */
 .canvasWrap {
   width: 100%;
   border: 1px solid #d0d5dd;
   border-radius: 10px;
   background: #fff;
   overflow: hidden;
-  height: 420px;     /* default start */
-  max-height: 2400px; /* ~3 pages */
+  height: 420px;
+  max-height: 2400px;
   position: relative;
 }
 
 #sketchSvg {
   display: block;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 22px); /* leave room for handle */
   touch-action: none;
   background: #fff;
 }
 
+/* ✅ bigger, always-on-top, easy to drag */
 .canvasResizer {
-  height: 14px;
+  height: 22px;              /* was 14px */
   cursor: ns-resize;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.02), rgba(0,0,0,0.06));
+  background: linear-gradient(to bottom, rgba(0,0,0,0.02), rgba(0,0,0,0.08));
   border-top: 1px solid #e4e7ec;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  touch-action: none;
+}
+
+/* little grip indicator */
+.canvasResizer::before {
+  content: "";
+  width: 46px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.25);
 }
 
 .canvasTools {
@@ -298,7 +254,4 @@ select option { color: #0b1220; }
   cursor: pointer;
 }
 .colorBtn:hover, #eraserBtn:hover, #clearCanvasBtn:hover { background: #f7f8fc; }
-
-.colorBtn.active, #eraserBtn.active {
-  outline: 2px solid rgba(11, 79, 108, 0.35);
-}
+.colorBtn.active, #eraserBtn.active { outline: 2px solid rgba(11, 79, 108, 0.35); }
