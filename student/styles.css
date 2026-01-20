@@ -1,34 +1,195 @@
-body {
-  font-family: system-ui, sans-serif;
-  margin: 0;
-  background: #f5f6f7;
+:root {
+  --bg: #f5f6f7;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --brand: #0b4f6c;
+  --border: #e2e8f0;
+  --error: #b91c1c;
 }
 
-header {
-  background: #0b4f6c;
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.topbar {
+  background: var(--brand);
   color: white;
-  padding: 1rem;
+  padding: 14px 16px;
   display: flex;
+  gap: 16px;
+  align-items: center;
   justify-content: space-between;
 }
 
-main {
-  padding: 1rem;
+.brand .title {
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.term, .week, .lesson {
-  background: white;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  padding: 0.75rem 1rem;
+.brand .subtitle {
+  font-size: 12px;
+  opacity: 0.9;
 }
 
-.collapsed > *:not(h2) {
-  display: none;
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-h2, h3, h4 {
+.label {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  min-width: 160px;
+}
+
+.container {
+  padding: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.status {
+  background: #eef2ff;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.status.error {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: var(--error);
+  white-space: pre-wrap;
+}
+
+.planner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.planHeader {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.planTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.planMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  background: #f8fafc;
+}
+
+.details {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px 10px;
+}
+
+.summary {
   cursor: pointer;
-  margin: 0;
+  padding: 10px 6px;
+  font-weight: 700;
+  list-style: none;
 }
 
+.summary::-webkit-details-marker { display: none; }
+
+.summaryText {
+  display: inline-block;
+}
+
+.detailsBody {
+  padding: 0 6px 10px 6px;
+}
+
+.term .summary { font-size: 16px; }
+.week .summary { font-size: 14px; font-weight: 700; }
+.lesson .summary { font-size: 13px; font-weight: 700; }
+
+.block {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+.blockTitle {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.list a {
+  color: #0b4f6c;
+  text-decoration: none;
+}
+.list a:hover {
+  text-decoration: underline;
+}
+
+.para {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.missing {
+  color: var(--error);
+  font-size: 13px;
+}
+
+.info {
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
