@@ -1,7 +1,4 @@
-
-const TEXTBOOK_REFERENCES = [
-  /* ======================= AA SL ======================= */
-
+[
   {
     id: "tb-0",
     textbook: "AA-SL",
@@ -171,8 +168,6 @@ const TEXTBOOK_REFERENCES = [
     url: "https://snowflake.haesemathematics.com.au/viewer/mathematics-analysis-and-approaches-sl/book/ibsl-aaa-2/505"
   },
 
-  /* ======================= Core SL ======================= */
-
   {
     id: "tb-21",
     textbook: "Core-SL",
@@ -270,8 +265,6 @@ const TEXTBOOK_REFERENCES = [
       "Measures of centre and spread, grouped data, box and whisker plots, cumulative frequency graphs, variance and standard deviation.",
     url: "https://snowflake.haesemathematics.com.au/viewer/mathematics-core-topics-sl/book/ibsl-core/305"
   },
-
-  /* ======================= AA HL ======================= */
 
   {
     id: "tb-33",
@@ -502,9 +495,7 @@ const TEXTBOOK_REFERENCES = [
     url: "https://snowflake.haesemathematics.com.au/viewer/mathematics-analysis-and-approaches-hl/book/ibhl-aaa-2/769"
   },
 
-  /* ======================= Core HL ======================= */
-
-  {
+ {
     id: "tb-61",
     textbook: "Core-HL",
     label: "Haese Core HL – Ch 1: Straight Lines",
@@ -643,9 +634,6 @@ const TEXTBOOK_REFERENCES = [
       "Periodic behaviour, sine and cosine functions, general sinusoidal models, fitting trigonometric models to data, tangent function, trigonometric equations and using trigonometric models.",
     url: "https://snowflake.haesemathematics.com.au/viewer/mathematics-core-topics-hl/book/ibhl-core/447"
   },
-
-  /* ======================= AI SL ======================= */
-
   {
     id: "tb-78",
     textbook: "AI-SL",
