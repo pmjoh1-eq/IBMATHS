@@ -2,28 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>IB Mathematics Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IB Course Planner</title>
 
   <link rel="stylesheet" href="styles.css" />
 
+  <!-- MathJax (optional). If it fails to load, the app still works. -->
   <script>
     window.MathJax = {
       tex: { inlineMath: [['$', '$']] },
       svg: { fontCache: 'global' }
     };
   </script>
-  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 </head>
 
 <body>
-  <header>
-    <h1>IB Course Planner</h1>
-    <select id="classSelect"></select>
+  <header class="topbar">
+    <div class="brand">
+      <div class="title">IB Course Planner</div>
+      <div class="subtitle">Term → Week → Lesson • Syllabus + Textbook links • Homework</div>
+    </div>
+
+    <div class="controls">
+      <label class="label" for="classSelect">Class</label>
+      <select id="classSelect" class="select" aria-label="Select class"></select>
+    </div>
   </header>
 
-  <main id="planner"></main>
+  <main class="container">
+    <div id="status" class="status" hidden></div>
+    <div id="planner" class="planner"></div>
+  </main>
 
-  <script src="app.js"></script>
+  <script defer src="app.js"></script>
 </body>
 </html>
-
