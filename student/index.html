@@ -3,16 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>IB Course Planner</title>
-
+  <title>IB Course Planner (Student)</title>
   <link rel="stylesheet" href="styles.css" />
 
-  <!-- MathJax (optional). If it fails to load, the app still works. -->
+  <!-- Optional MathJax -->
   <script>
-    window.MathJax = {
-      tex: { inlineMath: [['$', '$']] },
-      svg: { fontCache: 'global' }
-    };
+    window.MathJax = { tex: { inlineMath: [['$', '$']] }, svg: { fontCache: 'global' } };
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 </head>
@@ -21,18 +17,67 @@
   <header class="topbar">
     <div class="brand">
       <div class="title">IB Course Planner</div>
-      <div class="subtitle">Term → Week → Lesson • Syllabus + Textbook links • Homework</div>
+      <div class="subtitle">Weekly lessons • syllabus • textbook links</div>
     </div>
 
     <div class="controls">
       <label class="label" for="classSelect">Class</label>
-      <select id="classSelect" class="select" aria-label="Select class"></select>
+      <select id="classSelect" class="select"></select>
+
+      <button id="thisWeekBtn" class="btn primary">Open This Week</button>
     </div>
   </header>
 
   <main class="container">
     <div id="status" class="status" hidden></div>
-    <div id="planner" class="planner"></div>
+
+    <section class="card">
+      <div class="row rowTight">
+        <div class="pill"><strong>Today:</strong> <span id="todayLabel"></span></div>
+        <div class="pill"><strong>Auto:</strong> opens the week containing today (if week has a start date)</div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <aside class="sidebar card">
+        <h2>Plan</h2>
+        <div id="tree"></div>
+      </aside>
+
+      <section class="viewer card">
+        <h2>Lesson</h2>
+        <div id="viewerEmpty" class="info">Select a lesson to view details.</div>
+
+        <div id="viewer" class="hidden">
+          <div class="lessonHeader">
+            <div>
+              <div id="lessonTitle" class="lessonTitle"></div>
+              <div id="lessonMeta" class="lessonMeta"></div>
+            </div>
+          </div>
+
+          <div class="block">
+            <h3>Syllabus objectives</h3>
+            <div id="syllabusList" class="list"></div>
+          </div>
+
+          <div class="block">
+            <h3>Textbook references</h3>
+            <div id="textbookList" class="list"></div>
+          </div>
+
+          <div class="block">
+            <h3>Homework</h3>
+            <div id="homework" class="info"></div>
+          </div>
+
+          <div class="block">
+            <h3>Notes</h3>
+            <div id="notes" class="notesBox"></div>
+          </div>
+        </div>
+      </section>
+    </section>
   </main>
 
   <script defer src="app.js"></script>
