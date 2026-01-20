@@ -1,38 +1,49 @@
-const CLASSES = ["12AA_SL","12AA_HL","12AI_SL","11AA_SL","11AA_HL","11AI_SL"];
-
-const classSelect = document.getElementById("classSelect");
-const thisWeekBtn = document.getElementById("thisWeekBtn");
-const todayLabel = document.getElementById("todayLabel");
-
 const treeEl = document.getElementById("tree");
 const statusEl = document.getElementById("status");
+const classSelect = document.getElementById("classSelect");
+const openThisWeekBtn = document.getElementById("openThisWeekBtn");
 
-const viewerEmpty = document.getElementById("viewerEmpty");
-const viewer = document.getElementById("viewer");
-const lessonTitle = document.getElementById("lessonTitle");
-const lessonMeta = document.getElementById("lessonMeta");
-const syllabusList = document.getElementById("syllabusList");
-const textbookList = document.getElementById("textbookList");
-const homeworkEl = document.getElementById("homework");
-const notesEl = document.getElementById("notes");
+const lessonView = document.getElementById("lessonView");
+
+const studentNotesText = document.getElementById("studentNotesText");
+const sketchSvg = document.getElementById("sketchSvg");
+const clearCanvasBtn = document.getElementById("clearCanvasBtn");
+const eraserBtn = document.getElementById("eraserBtn");
+
+const CLASSES = ["12AA_SL","12AA_HL","12AI_SL","11AA_SL","11AA_HL","11AI_SL"];
 
 let repoRoot = "";
 let syllabus = [];
 let textbooks = [];
 let plan = null;
 
-let collapsed = {
-  terms: {}, // termIndex -> true/false
-  weeks: {}  // `${tIdx}-${wIdx}` -> true/false
+let selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
+
+// default collapsed
+let collapsed = { terms: {}, weeks: {} };
+
+// -------- Student notes state (per lesson) ----------
+let currentLessonKey = null;
+
+// Sketch tool state
+let tool = {
+  mode: "pen", // 'pen' | 'eraser'
+  color: "#111111",
+  penWidth: 3.5,
+  eraserWidth: 18
 };
 
-let selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
+let drawing = {
+  isDown: false,
+  currentPathEl: null,
+  d: "",
+  lastPt: null
+};
 
 init().catch(showError);
 
 async function init() {
   repoRoot = getRepoRoot();
-  todayLabel.textContent = formatDateLocal(new Date());
 
   classSelect.innerHTML = "";
   for (const c of CLASSES) {
@@ -50,14 +61,28 @@ async function init() {
   clearStatus();
 
   classSelect.addEventListener("change", () => loadPlanAndRender().catch(showError));
-  thisWeekBtn.addEventListener("click", () => openThisWeek(true));
+  openThisWeekBtn.addEventListener("click", () => openThisWeek());
+
+  // Notes autosave
+  studentNotesText.addEventListener("input", () => {
+    if (!currentLessonKey) return;
+    localStorage.setItem(lsKeyText(currentLessonKey), studentNotesText.value || "");
+  });
+
+  // Sketch tools
+  setupToolButtons();
+  setupSketchCanvas();
+
+  clearCanvasBtn.addEventListener("click", () => {
+    if (!currentLessonKey) return;
+    sketchSvg.innerHTML = "";
+    saveSketch();
+  });
 
   await loadPlanAndRender();
-
-  // Auto-open on first load
-  openThisWeek(false);
 }
 
+// ---------- Data loading ----------
 async function loadPlanAndRender() {
   const classId = classSelect.value || CLASSES[0];
   classSelect.value = classId;
@@ -66,20 +91,22 @@ async function loadPlanAndRender() {
   plan = await loadJSON(new URL(`data/plans/${classId}.json`, repoRoot).toString(), `${classId}.json`);
   clearStatus();
 
-  // reset selection, keep collapse state
   selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
+  collapsed = { terms: {}, weeks: {} }; // reset so everything starts unexpanded
 
   renderTree();
   renderLesson();
+  loadStudentNotesForSelection(); // will clear
 }
 
+// ---------- Tree ----------
 function renderTree() {
   treeEl.innerHTML = "";
   if (!plan?.terms) return;
 
   plan.terms.forEach((term, tIdx) => {
     const termKey = String(tIdx);
-    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true;
+    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true; // start collapsed
 
     const termBox = document.createElement("div");
     termBox.className = "treeItem";
@@ -88,15 +115,19 @@ function renderTree() {
     hdr.className = "treeHdr";
 
     const left = document.createElement("div");
+    left.style.cursor = "pointer";
     left.innerHTML = `
       <div class="treeTitle">${escapeHtml(term.label || term.term_id || `Term ${tIdx+1}`)}</div>
       <div class="treeMeta">Term</div>
     `;
+    left.onclick = () => {
+      collapsed.terms[termKey] = !collapsed.terms[termKey];
+      renderTree();
+    };
 
     const btn = document.createElement("button");
     btn.className = "iconBtn";
     btn.textContent = collapsed.terms[termKey] ? "+" : "−";
-    btn.title = collapsed.terms[termKey] ? "Expand" : "Collapse";
     btn.onclick = () => {
       collapsed.terms[termKey] = !collapsed.terms[termKey];
       renderTree();
@@ -112,7 +143,7 @@ function renderTree() {
 
       (term.weeks || []).forEach((week, wIdx) => {
         const wkKey = `${tIdx}-${wIdx}`;
-        if (collapsed.weeks[wkKey] === undefined) collapsed.weeks[wkKey] = false;
+        if (collapsed.weeks[wkKey] === undefined) collapsed.weeks[wkKey] = true; // start collapsed
 
         const weekBox = document.createElement("div");
         weekBox.className = "treeItem";
@@ -121,16 +152,20 @@ function renderTree() {
         wh.className = "treeHdr";
 
         const wLeft = document.createElement("div");
+        wLeft.style.cursor = "pointer";
         const dateLabel = week.start_date ? ` • starts ${escapeHtml(week.start_date)}` : "";
         wLeft.innerHTML = `
           <div class="treeTitle">${escapeHtml(week.label || week.week_id || `Week ${wIdx+1}`)}</div>
           <div class="treeMeta">Week${dateLabel}</div>
         `;
+        wLeft.onclick = () => {
+          collapsed.weeks[wkKey] = !collapsed.weeks[wkKey];
+          renderTree();
+        };
 
         const wBtn = document.createElement("button");
         wBtn.className = "iconBtn";
         wBtn.textContent = collapsed.weeks[wkKey] ? "+" : "−";
-        wBtn.title = collapsed.weeks[wkKey] ? "Expand" : "Collapse";
         wBtn.onclick = () => {
           collapsed.weeks[wkKey] = !collapsed.weeks[wkKey];
           renderTree();
@@ -145,16 +180,18 @@ function renderTree() {
           weekChildren.className = "treeChildren";
 
           (week.lessons || []).forEach((lesson, lIdx) => {
-            const item = document.createElement("button");
-            item.className = "btn";
-            item.style.width = "100%";
-            item.style.textAlign = "left";
-            item.textContent = lesson.title || `Lesson ${lIdx+1}`;
-            item.onclick = () => {
-              selected = { termIndex: tIdx, weekIndex: wIdx, lessonIndex: lIdx };
+            const b = document.createElement("button");
+            b.className = "lessonBtn" + (isSelected(tIdx, wIdx, lIdx) ? " active" : "");
+            b.textContent = lesson.title || `Lesson ${lIdx+1}`;
+            b.onclick = () => {
+              selected.termIndex = tIdx;
+              selected.weekIndex = wIdx;
+              selected.lessonIndex = lIdx;
+              renderTree();
               renderLesson();
+              loadStudentNotesForSelection();
             };
-            weekChildren.appendChild(item);
+            weekChildren.appendChild(b);
           });
 
           weekBox.appendChild(weekChildren);
@@ -170,152 +207,275 @@ function renderTree() {
   });
 }
 
+function isSelected(t, w, l){
+  return selected.termIndex === t && selected.weekIndex === w && selected.lessonIndex === l;
+}
+
+// ---------- Lesson view ----------
 function renderLesson() {
   const lesson = getSelectedLesson();
   if (!lesson) {
-    viewerEmpty.classList.remove("hidden");
-    viewer.classList.add("hidden");
+    lessonView.innerHTML = `<div class="muted">Select a lesson from a week to view details.</div>`;
     return;
   }
 
-  viewerEmpty.classList.add("hidden");
-  viewer.classList.remove("hidden");
+  const week = getSelectedWeek();
+  const term = getSelectedTerm();
 
-  const { term, week } = getSelectedContext();
-  lessonTitle.textContent = lesson.title || "Lesson";
-  lessonMeta.textContent = `${term?.label || term?.term_id || ""} • ${week?.label || week?.week_id || ""}${week?.start_date ? ` • week starts ${week.start_date}` : ""}`;
+  const syllabusItems = (lesson.syllabus_ids || [])
+    .map(id => syllabus.find(s => s.id === id))
+    .filter(Boolean);
 
-  // syllabus
-  syllabusList.innerHTML = "";
-  (lesson.syllabus_ids || []).forEach(id => {
-    const s = syllabus.find(x => x.id === id);
-    syllabusList.appendChild(renderSyllabusCard(id, s));
-  });
-  if ((lesson.syllabus_ids || []).length === 0) syllabusList.innerHTML = `<div class="info">No syllabus objectives attached.</div>`;
+  const tbItems = (lesson.textbook_ids || [])
+    .map(id => textbooks.find(t => t.id === id))
+    .filter(Boolean);
 
-  // textbooks
-  textbookList.innerHTML = "";
-  (lesson.textbook_ids || []).forEach(id => {
-    const tb = textbooks.find(x => x.id === id);
-    textbookList.appendChild(renderTextbookCard(id, tb));
-  });
-  if ((lesson.textbook_ids || []).length === 0) textbookList.innerHTML = `<div class="info">No textbook references attached.</div>`;
+  lessonView.innerHTML = `
+    <div class="lessonCard">
+      <div class="kv"><div class="k">Term</div><div class="v">${escapeHtml(term?.label || term?.term_id || "")}</div></div>
+      <div class="kv"><div class="k">Week</div><div class="v">${escapeHtml(week?.label || week?.week_id || "")}${week?.start_date ? ` (starts ${escapeHtml(week.start_date)})` : ""}</div></div>
+      <div class="kv"><div class="k">Lesson</div><div class="v">${escapeHtml(lesson.title || "")}</div></div>
 
-  homeworkEl.textContent = lesson.homework?.trim() ? lesson.homework : "No homework set.";
-  notesEl.innerHTML = escapeHtml(lesson.notes_latex || "").replaceAll("\n", "<br/>");
+      <div class="kv"><div class="k">Homework</div><div class="v">${escapeHtml(lesson.homework || "") || "<span class='muted'>—</span>"}</div></div>
 
-  typesetMath().catch(() => {});
-}
+      <div class="kv"><div class="k">Teacher notes</div><div class="v">${formatTeacherNotes(lesson.notes_latex || "")}</div></div>
 
-function renderSyllabusCard(id, s) {
-  const div = document.createElement("div");
-  div.className = "item";
+      <div class="kv"><div class="k">Syllabus</div><div class="v">
+        ${syllabusItems.length ? `<ul class="list">${syllabusItems.map(s => `<li><strong>${escapeHtml(s.section || s.id)}</strong> — ${escapeHtml(s.text || "")}</li>`).join("")}</ul>` : "<span class='muted'>—</span>"}
+      </div></div>
 
-  const topic = s?.topic || "";
-  const section = s?.section || "";
-  const text = s?.text || "";
-
-  div.innerHTML = `
-    <div class="itemTop">
-      <div>
-        <div class="itemId">${escapeHtml(id)}</div>
-        <div class="itemSub">${escapeHtml(section)} • ${escapeHtml(topic)}</div>
-      </div>
+      <div class="kv"><div class="k">Textbook</div><div class="v">
+        ${tbItems.length ? `<ul class="list">${tbItems.map(t => `<li>${escapeHtml(t.label || t.id)}${t.detail ? ` — <span class="muted">${escapeHtml(t.detail)}</span>` : ""}${t.url ? ` • <a href="${escapeAttr(t.url)}" target="_blank" rel="noopener">Open</a>` : ""}</li>`).join("")}</ul>` : "<span class='muted'>—</span>"}
+      </div></div>
     </div>
-    <div class="itemText">${escapeHtml(text)}</div>
   `;
-  return div;
+
+  typesetMath().catch(()=>{});
 }
 
-function renderTextbookCard(id, tb) {
-  const div = document.createElement("div");
-  div.className = "item";
-
-  const label = tb?.label || "";
-  const book = tb?.textbook || "";
-  const detail = tb?.detail || "";
-  const url = tb?.url || "";
-
-  div.innerHTML = `
-    <div class="itemTop">
-      <div>
-        <div class="itemId">${escapeHtml(id)}</div>
-        <div class="itemSub">${escapeHtml(book)} • ${escapeHtml(label)}</div>
-      </div>
-      ${url ? `<div><a href="${escapeAttr(url)}" target="_blank" rel="noopener">Open</a></div>` : ""}
-    </div>
-    <div class="itemText">${escapeHtml(detail)}</div>
-  `;
-  return div;
+function formatTeacherNotes(s){
+  if (!s) return "<span class='muted'>—</span>";
+  // Keep it simple: show raw latex text; MathJax will render inline math
+  const escaped = escapeHtml(s).replaceAll("\n","<br/>");
+  return `<div>${escaped}</div>`;
 }
 
-// ---- "This week" auto-open ----
-function openThisWeek(forceSelect) {
-  const today = startOfLocalDay(new Date());
-  const hit = findWeekContainingDate(today);
-
-  if (!hit) {
-    if (forceSelect) setStatus("No week found for today (missing start_date).", "error");
+// ---------- Open this week ----------
+function openThisWeek(){
+  const idx = findThisWeekIndex();
+  if (!idx) {
+    setStatus("No week dates found (start_date). Ask your teacher to set week start dates.", "error");
     return;
   }
 
-  // expand term/week to show it
-  collapsed.terms[String(hit.tIdx)] = false;
-  collapsed.weeks[`${hit.tIdx}-${hit.wIdx}`] = false;
+  const { tIdx, wIdx } = idx;
+  selected.termIndex = tIdx;
+  selected.weekIndex = wIdx;
+  selected.lessonIndex = null;
 
-  // select first lesson in that week if available
-  const week = plan.terms[hit.tIdx].weeks[hit.wIdx];
-  const hasLesson = (week.lessons || []).length > 0;
-
-  if (hasLesson) {
-    selected = { termIndex: hit.tIdx, weekIndex: hit.wIdx, lessonIndex: 0 };
-  } else {
-    selected = { termIndex: hit.tIdx, weekIndex: hit.wIdx, lessonIndex: null };
-  }
+  collapsed.terms[String(tIdx)] = false;
+  collapsed.weeks[`${tIdx}-${wIdx}`] = false;
 
   renderTree();
   renderLesson();
-
-  if (forceSelect) {
-    setStatus(`Opened: ${plan.terms[hit.tIdx].label || "Term"} / ${week.label || "Week"} (this week).`, "ok");
-    setTimeout(clearStatus, 1800);
-  }
+  loadStudentNotesForSelection(); // clears, since no lesson selected
+  clearStatus();
 }
 
-function findWeekContainingDate(dateLocalDay) {
+function findThisWeekIndex(){
   if (!plan?.terms) return null;
 
-  for (let tIdx = 0; tIdx < plan.terms.length; tIdx++) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  for (let tIdx=0; tIdx<plan.terms.length; tIdx++){
     const term = plan.terms[tIdx];
     const weeks = term.weeks || [];
-    for (let wIdx = 0; wIdx < weeks.length; wIdx++) {
+    for (let wIdx=0; wIdx<weeks.length; wIdx++){
       const w = weeks[wIdx];
       if (!w.start_date) continue;
-
-      const start = parseISODateLocal(w.start_date);
+      const start = parseISODate(w.start_date);
       if (!start) continue;
+      const end = new Date(start);
+      end.setDate(end.getDate()+7);
 
-      const end = addDays(start, 7);
-      if (dateLocalDay >= start && dateLocalDay < end) return { tIdx, wIdx };
+      if (today >= start && today < end){
+        return { tIdx, wIdx };
+      }
     }
   }
   return null;
 }
 
-// ---- selection helpers ----
-function getSelectedContext() {
-  const term = (plan?.terms || [])[selected.termIndex] || null;
-  const week = (term?.weeks || [])[selected.weekIndex] || null;
-  return { term, week };
+function parseISODate(s){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  d.setHours(0,0,0,0);
+  return d;
 }
-function getSelectedLesson() {
-  const { week } = getSelectedContext();
-  if (!week) return null;
-  if (selected.lessonIndex === null) return null;
+
+// ---------- Student local notes: text + svg ----------
+function loadStudentNotesForSelection(){
+  const lesson = getSelectedLesson();
+  if (!lesson) {
+    currentLessonKey = null;
+    studentNotesText.value = "";
+    sketchSvg.innerHTML = "";
+    return;
+  }
+
+  currentLessonKey = makeLessonStorageKey();
+
+  // load text
+  const txt = localStorage.getItem(lsKeyText(currentLessonKey)) || "";
+  studentNotesText.value = txt;
+
+  // load svg
+  const svg = localStorage.getItem(lsKeySvg(currentLessonKey)) || "";
+  if (svg) {
+    // Replace the entire SVG contents safely: parse as text and extract children
+    // We store only the inner markup of the SVG for simplicity.
+    sketchSvg.innerHTML = svg;
+  } else {
+    sketchSvg.innerHTML = "";
+  }
+}
+
+function makeLessonStorageKey(){
+  const classId = classSelect.value || plan?.class_id || "class";
+  const term = getSelectedTerm();
+  const week = getSelectedWeek();
+  const lesson = getSelectedLesson();
+
+  const t = term?.term_id || `T${selected.termIndex+1}`;
+  const w = week?.week_id || `W${selected.weekIndex+1}`;
+  const l = lesson?.lesson_id || `L${selected.lessonIndex+1}`;
+
+  return `${classId}::${t}::${w}::${l}`;
+}
+
+function lsKeyText(k){ return `planner_student_text::${k}`; }
+function lsKeySvg(k){ return `planner_student_svg::${k}`; }
+
+function saveSketch(){
+  if (!currentLessonKey) return;
+  // Store only the inner contents (paths) to avoid width/height differences
+  localStorage.setItem(lsKeySvg(currentLessonKey), sketchSvg.innerHTML || "");
+}
+
+// ---------- Sketch canvas (SVG) ----------
+function setupToolButtons(){
+  // color buttons
+  const colorBtns = document.querySelectorAll(".colorBtn");
+  colorBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tool.mode = "pen";
+      eraserBtn.classList.remove("active");
+      colorBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      tool.color = btn.dataset.color;
+    });
+  });
+
+  eraserBtn.addEventListener("click", () => {
+    tool.mode = "eraser";
+    eraserBtn.classList.add("active");
+    colorBtns.forEach(b => b.classList.remove("active"));
+  });
+}
+
+function setupSketchCanvas(){
+  // Ensure viewBox matches rendered size
+  const syncViewBox = () => {
+    const rect = sketchSvg.getBoundingClientRect();
+    const w = Math.max(1, Math.floor(rect.width));
+    const h = Math.max(1, Math.floor(rect.height));
+    sketchSvg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  };
+  syncViewBox();
+  window.addEventListener("resize", syncViewBox);
+
+  sketchSvg.addEventListener("pointerdown", (e) => {
+    if (!currentLessonKey) return;
+    sketchSvg.setPointerCapture(e.pointerId);
+    drawing.isDown = true;
+    drawing.lastPt = svgPoint(e);
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const width = tool.mode === "eraser" ? tool.eraserWidth : tool.penWidth;
+    const stroke = tool.mode === "eraser" ? "#ffffff" : tool.color;
+
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", stroke);
+    path.setAttribute("stroke-width", String(width));
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+
+    const p = drawing.lastPt;
+    drawing.d = `M ${p.x} ${p.y}`;
+    path.setAttribute("d", drawing.d);
+
+    sketchSvg.appendChild(path);
+    drawing.currentPathEl = path;
+  });
+
+  sketchSvg.addEventListener("pointermove", (e) => {
+    if (!drawing.isDown || !drawing.currentPathEl) return;
+    const p = svgPoint(e);
+
+    // Simple smoothing: quadratic curve between last and new
+    const lp = drawing.lastPt;
+    const mx = (lp.x + p.x) / 2;
+    const my = (lp.y + p.y) / 2;
+
+    drawing.d += ` Q ${lp.x} ${lp.y} ${mx} ${my}`;
+    drawing.currentPathEl.setAttribute("d", drawing.d);
+
+    drawing.lastPt = p;
+  });
+
+  const end = (e) => {
+    if (!drawing.isDown) return;
+    drawing.isDown = false;
+    drawing.currentPathEl = null;
+    drawing.d = "";
+    drawing.lastPt = null;
+    saveSketch();
+  };
+
+  sketchSvg.addEventListener("pointerup", end);
+  sketchSvg.addEventListener("pointercancel", end);
+  sketchSvg.addEventListener("pointerleave", end);
+}
+
+function svgPoint(e){
+  const rect = sketchSvg.getBoundingClientRect();
+  const vb = sketchSvg.viewBox.baseVal;
+  const sx = vb.width / rect.width;
+  const sy = vb.height / rect.height;
+
+  const x = (e.clientX - rect.left) * sx;
+  const y = (e.clientY - rect.top) * sy;
+
+  return { x: round2(x), y: round2(y) };
+}
+
+function round2(n){ return Math.round(n * 100) / 100; }
+
+// ---------- Selected getters ----------
+function getSelectedTerm(){ return (plan?.terms || [])[selected.termIndex] || null; }
+function getSelectedWeek(){
+  const term = getSelectedTerm();
+  return (term?.weeks || [])[selected.weekIndex] || null;
+}
+function getSelectedLesson(){
+  const week = getSelectedWeek();
+  if (!week || selected.lessonIndex === null) return null;
   return (week.lessons || [])[selected.lessonIndex] || null;
 }
 
-// ---- util ----
+// ---------- Helpers ----------
 async function loadJSON(url, label) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`Failed to load ${label}: ${res.status} ${res.statusText}\nURL: ${url}`);
@@ -339,24 +499,10 @@ function clearStatus(){ statusEl.hidden = true; statusEl.textContent=""; }
 function showError(err){ console.error(err); setStatus(err?.message || String(err), "error"); }
 
 async function typesetMath(){
-  try {
-    if (window.MathJax?.typesetPromise) await window.MathJax.typesetPromise();
-  } catch {}
+  try { if (window.MathJax?.typesetPromise) await window.MathJax.typesetPromise(); } catch {}
 }
 
 function escapeHtml(s){
   return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
 }
-function escapeAttr(s){ return escapeHtml(s); }
-
-function startOfLocalDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-function parseISODateLocal(iso){
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso).trim());
-  if (!m) return null;
-  const y = Number(m[1]), mo = Number(m[2]) - 1, da = Number(m[3]);
-  return new Date(y, mo, da);
-}
-function addDays(d, n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
-function formatDateLocal(d){
-  return d.toLocaleDateString(undefined, { weekday:"long", year:"numeric", month:"short", day:"numeric" });
-}
+function escapeAttr(s){ return escapeHtml(s).replaceAll("`","&#96;"); }
