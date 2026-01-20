@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Planner Editor (Teacher)</title>
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- Optional MathJax (for previewing LaTeX in lesson notes). App still works without it. -->
   <script>
     window.MathJax = { tex: { inlineMath: [['$', '$']] }, svg: { fontCache: 'global' } };
   </script>
@@ -54,7 +52,7 @@
       </div>
       <p class="hint">
         Token needs <strong>Contents: Read/Write</strong> access for this repo.
-        This page saves these fields in <code>localStorage</code> on your device only.
+        Stored in <code>localStorage</code> on this device only.
       </p>
       <button id="saveGhBtn" class="btn">Save GitHub Settings</button>
     </section>
@@ -63,6 +61,15 @@
       <aside class="sidebar card">
         <h2>Structure</h2>
         <div id="tree"></div>
+
+        <div class="miniCard">
+          <h3>Selected Week Settings</h3>
+          <label class="fieldLabel">Week start date (YYYY-MM-DD)</label>
+          <input id="weekStartDate" class="input" placeholder="2026-01-27" />
+          <button id="applyWeekBtn" class="btn full primary">Apply Week Date</button>
+          <div class="hint">Student view uses this for “Open This Week”.</div>
+        </div>
+
         <button id="addWeekBtn" class="btn full">+ Add Week to Selected Term</button>
         <button id="addLessonBtn" class="btn full">+ Add Lesson to Selected Week</button>
       </aside>
@@ -105,7 +112,7 @@
           <div class="row">
             <div class="col">
               <h3>Syllabus objectives</h3>
-              <input id="syllabusSearch" class="input" placeholder="Search syllabus (id, section, topic, text)..." />
+              <input id="syllabusSearch" class="input" placeholder="Search syllabus..." />
               <div id="syllabusResults" class="results"></div>
               <h4>Selected</h4>
               <div id="syllabusSelected" class="chips"></div>
@@ -113,7 +120,7 @@
 
             <div class="col">
               <h3>Textbook references</h3>
-              <input id="textbookSearch" class="input" placeholder="Search textbooks (id, label, detail, book)..." />
+              <input id="textbookSearch" class="input" placeholder="Search textbooks..." />
               <div id="textbookResults" class="results"></div>
               <h4>Selected</h4>
               <div id="textbookSelected" class="chips"></div>
@@ -131,4 +138,3 @@
   <script defer src="app.js"></script>
 </body>
 </html>
-
