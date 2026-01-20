@@ -2,14 +2,14 @@ document.addEventListener("DOMContentLoaded", () => {
   init().catch(showError);
 });
 
-function $(id) {
-  return document.getElementById(id);
-}
-
-let treeEl, statusEl, classSelect, openThisWeekBtn, lessonView;
-let studentNotesText, sketchSvg, clearCanvasBtn, eraserBtn;
+function $(id) { return document.getElementById(id); }
 
 const CLASSES = ["12AA_SL","12AA_HL","12AI_SL","11AA_SL","11AA_HL","11AI_SL"];
+
+let treeEl, statusEl, classSelect, openThisWeekBtn, lessonView;
+
+// Student notes + sketch
+let studentNotesText, sketchSvg, canvasWrap, canvasResizer, clearCanvasBtn, eraserBtn;
 
 let repoRoot = "";
 let syllabus = [];
@@ -17,9 +17,11 @@ let textbooks = [];
 let plan = null;
 
 let selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
+
+// all collapsed by default
 let collapsed = { terms: {}, weeks: {} };
 
-// -------- Student notes state (per lesson) ----------
+// Student notes state per lesson
 let currentLessonKey = null;
 
 // Sketch tool state
@@ -38,7 +40,6 @@ let drawing = {
 };
 
 async function init() {
-  // Grab elements (don’t assume they exist)
   treeEl = $("tree");
   statusEl = $("status");
   classSelect = $("classSelect");
@@ -47,22 +48,21 @@ async function init() {
 
   studentNotesText = $("studentNotesText");
   sketchSvg = $("sketchSvg");
+  canvasWrap = $("canvasWrap");
+  canvasResizer = $("canvasResizer");
   clearCanvasBtn = $("clearCanvasBtn");
   eraserBtn = $("eraserBtn");
 
-  // If status element is missing, create it to avoid crashes
+  // Create status element if missing (prevents crashes)
   if (!statusEl) {
     statusEl = document.createElement("div");
     statusEl.id = "status";
     statusEl.className = "status";
     statusEl.hidden = true;
-
-    // Put it at top of main content if possible, else body top
-    const main = document.querySelector("main") || document.body;
-    main.prepend(statusEl);
+    (document.querySelector("main") || document.body).prepend(statusEl);
   }
 
-  // Validate required core UI
+  // Required core UI
   if (!classSelect) throw new Error("Missing #classSelect in student/index.html");
   if (!treeEl) throw new Error("Missing #tree in student/index.html");
   if (!lessonView) throw new Error("Missing #lessonView in student/index.html");
@@ -96,10 +96,11 @@ async function init() {
     });
   }
 
-  // Sketch tools (only if canvas exists)
+  // Sketch tools
   if (sketchSvg && clearCanvasBtn && eraserBtn) {
     setupToolButtons();
     setupSketchCanvas();
+    if (canvasWrap && canvasResizer) setupCanvasResizer();
 
     clearCanvasBtn.addEventListener("click", () => {
       if (!currentLessonKey) return;
@@ -111,7 +112,7 @@ async function init() {
   await loadPlanAndRender();
 }
 
-// ---------- Data loading ----------
+/* ---------- Data loading ---------- */
 async function loadPlanAndRender() {
   const classId = classSelect.value || CLASSES[0];
   classSelect.value = classId;
@@ -121,21 +122,21 @@ async function loadPlanAndRender() {
   clearStatus();
 
   selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
-  collapsed = { terms: {}, weeks: {} }; // everything starts collapsed
+  collapsed = { terms: {}, weeks: {} }; // all collapsed (unexpanded)
 
   renderTree();
   renderLesson();
   loadStudentNotesForSelection();
 }
 
-// ---------- Tree ----------
+/* ---------- Tree ---------- */
 function renderTree() {
   treeEl.innerHTML = "";
   if (!plan?.terms) return;
 
   plan.terms.forEach((term, tIdx) => {
     const termKey = String(tIdx);
-    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true; // collapsed
+    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true; // collapsed by default
 
     const termBox = document.createElement("div");
     termBox.className = "treeItem";
@@ -144,9 +145,9 @@ function renderTree() {
     hdr.className = "treeHdr";
 
     const left = document.createElement("div");
-    left.style.cursor = "pointer";
+    left.className = "treeHdrLeft";
     left.innerHTML = `
-      <div class="treeTitle">${escapeHtml(term.label || term.term_id || `Term ${tIdx+1}`)}</div>
+      <div class="treeTitle">${escapeHtml(term.label || term.term_id || `Term ${tIdx + 1}`)}</div>
       <div class="treeMeta">Term</div>
     `;
     left.onclick = () => {
@@ -181,10 +182,10 @@ function renderTree() {
         wh.className = "treeHdr";
 
         const wLeft = document.createElement("div");
-        wLeft.style.cursor = "pointer";
+        wLeft.className = "treeHdrLeft";
         const dateLabel = week.start_date ? ` • starts ${escapeHtml(week.start_date)}` : "";
         wLeft.innerHTML = `
-          <div class="treeTitle">${escapeHtml(week.label || week.week_id || `Week ${wIdx+1}`)}</div>
+          <div class="treeTitle">${escapeHtml(week.label || week.week_id || `Week ${wIdx + 1}`)}</div>
           <div class="treeMeta">Week${dateLabel}</div>
         `;
         wLeft.onclick = () => {
@@ -211,7 +212,7 @@ function renderTree() {
           (week.lessons || []).forEach((lesson, lIdx) => {
             const b = document.createElement("button");
             b.className = "lessonBtn" + (isSelected(tIdx, wIdx, lIdx) ? " active" : "");
-            b.textContent = lesson.title || `Lesson ${lIdx+1}`;
+            b.textContent = lesson.title || `Lesson ${lIdx + 1}`;
             b.onclick = () => {
               selected.termIndex = tIdx;
               selected.weekIndex = wIdx;
@@ -236,11 +237,11 @@ function renderTree() {
   });
 }
 
-function isSelected(t, w, l){
+function isSelected(t, w, l) {
   return selected.termIndex === t && selected.weekIndex === w && selected.lessonIndex === l;
 }
 
-// ---------- Lesson view ----------
+/* ---------- Lesson view ---------- */
 function renderLesson() {
   const lesson = getSelectedLesson();
   if (!lesson) {
@@ -270,26 +271,30 @@ function renderLesson() {
       <div class="kv"><div class="k">Teacher notes</div><div class="v">${formatTeacherNotes(lesson.notes_latex || "")}</div></div>
 
       <div class="kv"><div class="k">Syllabus</div><div class="v">
-        ${syllabusItems.length ? `<ul class="list">${syllabusItems.map(s => `<li><strong>${escapeHtml(s.section || s.id)}</strong> — ${escapeHtml(s.text || "")}</li>`).join("")}</ul>` : "<span class='muted'>—</span>"}
+        ${syllabusItems.length
+          ? `<ul class="list">${syllabusItems.map(s => `<li><strong>${escapeHtml(s.section || s.id)}</strong> — ${escapeHtml(s.text || "")}</li>`).join("")}</ul>`
+          : "<span class='muted'>—</span>"}
       </div></div>
 
       <div class="kv"><div class="k">Textbook</div><div class="v">
-        ${tbItems.length ? `<ul class="list">${tbItems.map(t => `<li>${escapeHtml(t.label || t.id)}${t.detail ? ` — <span class="muted">${escapeHtml(t.detail)}</span>` : ""}${t.url ? ` • <a href="${escapeAttr(t.url)}" target="_blank" rel="noopener">Open</a>` : ""}</li>`).join("")}</ul>` : "<span class='muted'>—</span>"}
+        ${tbItems.length
+          ? `<ul class="list">${tbItems.map(t => `<li>${escapeHtml(t.label || t.id)}${t.detail ? ` — <span class="muted">${escapeHtml(t.detail)}</span>` : ""}${t.url ? ` • <a href="${escapeAttr(t.url)}" target="_blank" rel="noopener">Open</a>` : ""}</li>`).join("")}</ul>`
+          : "<span class='muted'>—</span>"}
       </div></div>
     </div>
   `;
 
-  typesetMath().catch(()=>{});
+  typesetMath().catch(() => {});
 }
 
-function formatTeacherNotes(s){
+function formatTeacherNotes(s) {
   if (!s) return "<span class='muted'>—</span>";
-  const escaped = escapeHtml(s).replaceAll("\n","<br/>");
+  const escaped = escapeHtml(s).replaceAll("\n", "<br/>");
   return `<div>${escaped}</div>`;
 }
 
-// ---------- Open this week ----------
-function openThisWeek(){
+/* ---------- Open this week ---------- */
+function openThisWeek() {
   const idx = findThisWeekIndex();
   if (!idx) {
     setStatus("No week dates found (start_date). Ask your teacher to set week start dates.", "error");
@@ -301,6 +306,7 @@ function openThisWeek(){
   selected.weekIndex = wIdx;
   selected.lessonIndex = null;
 
+  // Expand the correct term + week so students land there
   collapsed.terms[String(tIdx)] = false;
   collapsed.weeks[`${tIdx}-${wIdx}`] = false;
 
@@ -310,38 +316,39 @@ function openThisWeek(){
   clearStatus();
 }
 
-function findThisWeekIndex(){
+function findThisWeekIndex() {
   if (!plan?.terms) return null;
 
   const today = new Date();
-  today.setHours(0,0,0,0);
+  today.setHours(0, 0, 0, 0);
 
-  for (let tIdx=0; tIdx<plan.terms.length; tIdx++){
+  for (let tIdx = 0; tIdx < plan.terms.length; tIdx++) {
     const term = plan.terms[tIdx];
     const weeks = term.weeks || [];
-    for (let wIdx=0; wIdx<weeks.length; wIdx++){
+    for (let wIdx = 0; wIdx < weeks.length; wIdx++) {
       const w = weeks[wIdx];
       if (!w.start_date) continue;
       const start = parseISODate(w.start_date);
       if (!start) continue;
       const end = new Date(start);
-      end.setDate(end.getDate()+7);
+      end.setDate(end.getDate() + 7);
+
       if (today >= start && today < end) return { tIdx, wIdx };
     }
   }
   return null;
 }
 
-function parseISODate(s){
+function parseISODate(s) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
   if (!m) return null;
-  const d = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
-  d.setHours(0,0,0,0);
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  d.setHours(0, 0, 0, 0);
   return d;
 }
 
-// ---------- Student local notes ----------
-function loadStudentNotesForSelection(){
+/* ---------- Student local notes ---------- */
+function loadStudentNotesForSelection() {
   const lesson = getSelectedLesson();
   if (!lesson) {
     currentLessonKey = null;
@@ -360,29 +367,34 @@ function loadStudentNotesForSelection(){
     const svg = localStorage.getItem(lsKeySvg(currentLessonKey)) || "";
     sketchSvg.innerHTML = svg || "";
   }
+
+  // keep viewBox synced after swapping content
+  if (window.syncSketchViewBox) window.syncSketchViewBox();
 }
 
-function makeLessonStorageKey(){
+function makeLessonStorageKey() {
   const classId = classSelect.value || plan?.class_id || "class";
   const term = getSelectedTerm();
   const week = getSelectedWeek();
   const lesson = getSelectedLesson();
-  const t = term?.term_id || `T${selected.termIndex+1}`;
-  const w = week?.week_id || `W${selected.weekIndex+1}`;
-  const l = lesson?.lesson_id || `L${selected.lessonIndex+1}`;
+
+  const t = term?.term_id || `T${selected.termIndex + 1}`;
+  const w = week?.week_id || `W${selected.weekIndex + 1}`;
+  const l = lesson?.lesson_id || `L${selected.lessonIndex + 1}`;
+
   return `${classId}::${t}::${w}::${l}`;
 }
 
-function lsKeyText(k){ return `planner_student_text::${k}`; }
-function lsKeySvg(k){ return `planner_student_svg::${k}`; }
+function lsKeyText(k) { return `planner_student_text::${k}`; }
+function lsKeySvg(k) { return `planner_student_svg::${k}`; }
 
-function saveSketch(){
+function saveSketch() {
   if (!currentLessonKey || !sketchSvg) return;
   localStorage.setItem(lsKeySvg(currentLessonKey), sketchSvg.innerHTML || "");
 }
 
-// ---------- Sketch canvas ----------
-function setupToolButtons(){
+/* ---------- Sketch tools + drawing ---------- */
+function setupToolButtons() {
   const colorBtns = document.querySelectorAll(".colorBtn");
   colorBtns.forEach(btn => {
     btn.addEventListener("click", () => {
@@ -401,13 +413,17 @@ function setupToolButtons(){
   });
 }
 
-function setupSketchCanvas(){
+function setupSketchCanvas() {
   const syncViewBox = () => {
     const rect = sketchSvg.getBoundingClientRect();
     const w = Math.max(1, Math.floor(rect.width));
     const h = Math.max(1, Math.floor(rect.height));
     sketchSvg.setAttribute("viewBox", `0 0 ${w} ${h}`);
   };
+
+  // expose so resizer can call it
+  window.syncSketchViewBox = syncViewBox;
+
   syncViewBox();
   window.addEventListener("resize", syncViewBox);
 
@@ -441,6 +457,7 @@ function setupSketchCanvas(){
     const lp = drawing.lastPt;
     const mx = (lp.x + p.x) / 2;
     const my = (lp.y + p.y) / 2;
+
     drawing.d += ` Q ${lp.x} ${lp.y} ${mx} ${my}`;
     drawing.currentPathEl.setAttribute("d", drawing.d);
     drawing.lastPt = p;
@@ -460,31 +477,70 @@ function setupSketchCanvas(){
   sketchSvg.addEventListener("pointerleave", end);
 }
 
-function svgPoint(e){
+function setupCanvasResizer() {
+  let startY = 0;
+  let startH = 0;
+
+  const minH = 240;
+  const maxH = 2400; // ~3 pages (tweak if desired)
+
+  canvasResizer.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    canvasResizer.setPointerCapture(e.pointerId);
+    startY = e.clientY;
+    startH = canvasWrap.getBoundingClientRect().height;
+
+    const onMove = (ev) => {
+      const dy = ev.clientY - startY;
+      let next = startH + dy;
+      next = Math.max(minH, Math.min(maxH, next));
+      canvasWrap.style.height = `${Math.round(next)}px`;
+      if (window.syncSketchViewBox) window.syncSketchViewBox();
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      saveSketch();
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  });
+}
+
+function svgPoint(e) {
   const rect = sketchSvg.getBoundingClientRect();
   const vb = sketchSvg.viewBox.baseVal;
+
   const sx = vb.width / rect.width;
   const sy = vb.height / rect.height;
+
   const x = (e.clientX - rect.left) * sx;
   const y = (e.clientY - rect.top) * sy;
+
   return { x: round2(x), y: round2(y) };
 }
 
-function round2(n){ return Math.round(n * 100) / 100; }
+function round2(n) { return Math.round(n * 100) / 100; }
 
-// ---------- Selected getters ----------
-function getSelectedTerm(){ return (plan?.terms || [])[selected.termIndex] || null; }
-function getSelectedWeek(){
+/* ---------- Selected getters ---------- */
+function getSelectedTerm() {
+  return (plan?.terms || [])[selected.termIndex] || null;
+}
+function getSelectedWeek() {
   const term = getSelectedTerm();
   return (term?.weeks || [])[selected.weekIndex] || null;
 }
-function getSelectedLesson(){
+function getSelectedLesson() {
   const week = getSelectedWeek();
   if (!week || selected.lessonIndex === null) return null;
   return (week.lessons || [])[selected.lessonIndex] || null;
 }
 
-// ---------- Helpers ----------
+/* ---------- Helpers ---------- */
 async function loadJSON(url, label) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`Failed to load ${label}: ${res.status} ${res.statusText}\nURL: ${url}`);
@@ -492,34 +548,43 @@ async function loadJSON(url, label) {
 }
 
 function getRepoRoot() {
+  // If we're at /.../student/index.html, return /.../
   const path = window.location.pathname;
   const idx = path.lastIndexOf("/student/");
   if (idx >= 0) return window.location.origin + path.slice(0, idx + 1);
-  const url = new URL(".", window.location.href);
-  return url.toString();
+
+  // fallback
+  return new URL(".", window.location.href).toString();
 }
 
-function setStatus(msg, kind="info") {
+function setStatus(msg, kind = "info") {
   if (!statusEl) return;
   statusEl.hidden = false;
-  statusEl.className = "status" + (kind==="error" ? " error" : kind==="ok" ? " ok" : "");
+  statusEl.className = "status" + (kind === "error" ? " error" : kind === "ok" ? " ok" : "");
   statusEl.textContent = msg;
 }
-function clearStatus(){
+function clearStatus() {
   if (!statusEl) return;
   statusEl.hidden = true;
   statusEl.textContent = "";
 }
-function showError(err){
+function showError(err) {
   console.error(err);
   setStatus(err?.message || String(err), "error");
 }
 
-async function typesetMath(){
-  try { if (window.MathJax?.typesetPromise) await window.MathJax.typesetPromise(); } catch {}
+async function typesetMath() {
+  try {
+    if (window.MathJax?.typesetPromise) await window.MathJax.typesetPromise();
+  } catch {}
 }
 
-function escapeHtml(s){
-  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
+function escapeHtml(s) {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
-function escapeAttr(s){ return escapeHtml(s).replaceAll("`","&#96;"); }
+function escapeAttr(s) { return escapeHtml(s).replaceAll("`", "&#96;"); }
