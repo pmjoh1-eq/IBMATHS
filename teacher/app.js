@@ -1,12 +1,3 @@
-
-// Milestone 2 Teacher Editor
-// - Loads syllabus_objectives.json + textbook_references.json
-// - Loads selected plan json
-// - Lets you edit lessons + attach IDs
-// - Download JSON OR commit via GitHub Contents API
-//
-// No frameworks. Works on GitHub Pages and locally.
-
 const treeEl = document.getElementById("tree");
 const statusEl = document.getElementById("status");
 
@@ -17,6 +8,9 @@ const commitBtn = document.getElementById("commitBtn");
 
 const addWeekBtn = document.getElementById("addWeekBtn");
 const addLessonBtn = document.getElementById("addLessonBtn");
+
+const weekStartDateEl = document.getElementById("weekStartDate");
+const applyWeekBtn = document.getElementById("applyWeekBtn");
 
 const ghOwnerEl = document.getElementById("ghOwner");
 const ghRepoEl = document.getElementById("ghRepo");
@@ -46,21 +40,18 @@ const textbookSearch = document.getElementById("textbookSearch");
 const textbookResults = document.getElementById("textbookResults");
 const textbookSelected = document.getElementById("textbookSelected");
 
-const CLASSES = [
-  "12AA_SL", "12AA_HL", "12AI_SL",
-  "11AA_SL", "11AA_HL", "11AI_SL"
-];
+const CLASSES = ["12AA_SL","12AA_HL","12AI_SL","11AA_SL","11AA_HL","11AI_SL"];
 
 let repoRoot = "";
 let syllabus = [];
 let textbooks = [];
 let plan = null;
 
-// selection state
-let selected = {
-  termIndex: null,
-  weekIndex: null,
-  lessonIndex: null
+let selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
+
+let collapsed = {
+  terms: {}, // tIdx -> bool
+  weeks: {}  // `${tIdx}-${wIdx}` -> bool
 };
 
 init().catch(showError);
@@ -69,7 +60,6 @@ async function init() {
   repoRoot = getRepoRoot();
   hydrateGitHubFields();
 
-  // populate classes
   classSelect.innerHTML = "";
   for (const c of CLASSES) {
     const opt = document.createElement("option");
@@ -79,42 +69,37 @@ async function init() {
   }
 
   setStatus("Loading reference data…");
-
   [syllabus, textbooks] = await Promise.all([
     loadJSON(new URL("data/syllabus_objectives.json", repoRoot).toString(), "syllabus_objectives.json"),
     loadJSON(new URL("data/textbook_references.json", repoRoot).toString(), "textbook_references.json"),
   ]);
-
   clearStatus();
 
-  classSelect.addEventListener("change", () => {
-    loadPlanAndRender().catch(showError);
-  });
-
+  classSelect.addEventListener("change", () => loadPlanAndRender().catch(showError));
   downloadBtn.addEventListener("click", () => downloadCurrentPlan());
   commitBtn.addEventListener("click", () => commitCurrentPlanToGitHub().catch(showError));
 
   saveGhBtn.addEventListener("click", () => {
     saveGitHubFields();
     setStatus("Saved GitHub settings locally.", "ok");
-    setTimeout(clearStatus, 1500);
+    setTimeout(clearStatus, 1200);
   });
 
   addWeekBtn.addEventListener("click", () => addWeekToSelectedTerm());
   addLessonBtn.addEventListener("click", () => addLessonToSelectedWeek());
 
-  // editor actions
+  applyWeekBtn.addEventListener("click", () => applyWeekStartDate());
+
   applyLessonBtn.addEventListener("click", () => applyLessonEdits());
   moveUpBtn.addEventListener("click", () => moveLesson(-1));
   moveDownBtn.addEventListener("click", () => moveLesson(1));
   deleteLessonBtn.addEventListener("click", () => deleteLesson());
 
   previewMathBtn.addEventListener("click", async () => {
-    notesPreview.innerHTML = escapeHtmlAllowLatex(lessonNotesEl.value || "");
+    notesPreview.innerHTML = escapeHtml(lessonNotesEl.value || "").replaceAll("\n","<br/>");
     await typesetMath();
   });
 
-  // search wiring
   syllabusSearch.addEventListener("input", () => renderSyllabusSearch());
   textbookSearch.addEventListener("input", () => renderTextbookSearch());
 
@@ -125,122 +110,162 @@ async function loadPlanAndRender() {
   const classId = classSelect.value || CLASSES[0];
   classSelect.value = classId;
 
-  resetSelection();
-
   setStatus(`Loading plan: ${classId}…`);
-  const planUrl = new URL(`data/plans/${classId}.json`, repoRoot).toString();
-  plan = await loadJSON(planUrl, `${classId}.json`);
+  plan = await loadJSON(new URL(`data/plans/${classId}.json`, repoRoot).toString(), `${classId}.json`);
   clearStatus();
 
+  selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
+
   renderTree();
+  renderWeekEditor();
   renderEditor();
 }
 
 // ---------- Tree ----------
 function renderTree() {
   treeEl.innerHTML = "";
-  if (!plan) return;
-
-  plan.terms = plan.terms || [];
+  if (!plan?.terms) return;
 
   plan.terms.forEach((term, tIdx) => {
-    const termBox = makeTreeItem("Term", term.label || term.term_id || `Term ${tIdx + 1}`, () => {
+    const termKey = String(tIdx);
+    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = false;
+
+    const termBox = document.createElement("div");
+    termBox.className = "treeItem";
+
+    const hdr = document.createElement("div");
+    hdr.className = "treeHdr";
+
+    const left = document.createElement("div");
+    left.innerHTML = `<div class="treeTitle">${escapeHtml(term.label || term.term_id || `Term ${tIdx+1}`)}</div>
+                      <div class="treeMeta">Term</div>`;
+
+    const btn = document.createElement("button");
+    btn.className = "iconBtn";
+    btn.textContent = collapsed.terms[termKey] ? "+" : "−";
+    btn.title = collapsed.terms[termKey] ? "Expand" : "Collapse";
+    btn.onclick = () => { collapsed.terms[termKey] = !collapsed.terms[termKey]; renderTree(); };
+
+    hdr.appendChild(left);
+    hdr.appendChild(btn);
+    termBox.appendChild(hdr);
+
+    // select term on click (left area)
+    left.style.cursor = "pointer";
+    left.onclick = () => {
       selected.termIndex = tIdx;
-      selected.weekIndex = null;
+      selected.weekIndex = 0;
       selected.lessonIndex = null;
-      renderTree();
-      renderEditor();
-    }, isTermSelected(tIdx));
+      collapsed.terms[termKey] = false;
+      renderTree(); renderWeekEditor(); renderEditor();
+    };
 
-    const termChildren = document.createElement("div");
-    termChildren.className = "children";
+    if (!collapsed.terms[termKey]) {
+      const termChildren = document.createElement("div");
+      termChildren.className = "treeChildren";
 
-    (term.weeks || []).forEach((week, wIdx) => {
-      const weekBox = makeTreeItem("Week", week.label || week.week_id || `Week ${wIdx + 1}`, () => {
-        selected.termIndex = tIdx;
-        selected.weekIndex = wIdx;
-        selected.lessonIndex = null;
-        renderTree();
-        renderEditor();
-      }, isWeekSelected(tIdx, wIdx));
+      (term.weeks || []).forEach((week, wIdx) => {
+        const wkKey = `${tIdx}-${wIdx}`;
+        if (collapsed.weeks[wkKey] === undefined) collapsed.weeks[wkKey] = false;
 
-      const weekChildren = document.createElement("div");
-      weekChildren.className = "children";
+        const weekBox = document.createElement("div");
+        weekBox.className = "treeItem";
 
-      (week.lessons || []).forEach((lesson, lIdx) => {
-        const lessonBox = makeTreeItem("Lesson", lesson.title || lesson.lesson_id || `Lesson ${lIdx + 1}`, () => {
+        const wh = document.createElement("div");
+        wh.className = "treeHdr";
+
+        const wLeft = document.createElement("div");
+        const dateLabel = week.start_date ? ` • starts ${escapeHtml(week.start_date)}` : "";
+        wLeft.innerHTML = `<div class="treeTitle">${escapeHtml(week.label || week.week_id || `Week ${wIdx+1}`)}</div>
+                           <div class="treeMeta">Week${dateLabel}</div>`;
+
+        wLeft.style.cursor = "pointer";
+        wLeft.onclick = () => {
           selected.termIndex = tIdx;
           selected.weekIndex = wIdx;
-          selected.lessonIndex = lIdx;
-          renderTree();
-          renderEditor();
-        }, isLessonSelected(tIdx, wIdx, lIdx));
+          selected.lessonIndex = null;
+          collapsed.weeks[wkKey] = false;
+          renderTree(); renderWeekEditor(); renderEditor();
+        };
 
-        weekChildren.appendChild(lessonBox);
+        const wBtn = document.createElement("button");
+        wBtn.className = "iconBtn";
+        wBtn.textContent = collapsed.weeks[wkKey] ? "+" : "−";
+        wBtn.title = collapsed.weeks[wkKey] ? "Expand" : "Collapse";
+        wBtn.onclick = () => { collapsed.weeks[wkKey] = !collapsed.weeks[wkKey]; renderTree(); };
+
+        wh.appendChild(wLeft);
+        wh.appendChild(wBtn);
+        weekBox.appendChild(wh);
+
+        if (!collapsed.weeks[wkKey]) {
+          const weekChildren = document.createElement("div");
+          weekChildren.className = "treeChildren";
+
+          (week.lessons || []).forEach((lesson, lIdx) => {
+            const btnLesson = document.createElement("button");
+            btnLesson.className = "btn";
+            btnLesson.style.width = "100%";
+            btnLesson.style.textAlign = "left";
+            btnLesson.textContent = lesson.title || `Lesson ${lIdx+1}`;
+            btnLesson.onclick = () => {
+              selected.termIndex = tIdx;
+              selected.weekIndex = wIdx;
+              selected.lessonIndex = lIdx;
+              renderWeekEditor();
+              renderEditor();
+            };
+            weekChildren.appendChild(btnLesson);
+          });
+
+          weekBox.appendChild(weekChildren);
+        }
+
+        termChildren.appendChild(weekBox);
       });
 
-      weekBox.appendChild(weekChildren);
-      termChildren.appendChild(weekBox);
-    });
+      termBox.appendChild(termChildren);
+    }
 
-    termBox.appendChild(termChildren);
     treeEl.appendChild(termBox);
   });
 }
 
-function makeTreeItem(kind, name, onSelect, isSelected) {
-  const box = document.createElement("div");
-  box.className = "treeItem";
-  box.style.outline = isSelected ? "2px solid #0b4f6c" : "none";
-
-  const hdr = document.createElement("div");
-  hdr.className = "hdr";
-
-  const left = document.createElement("div");
-  left.innerHTML = `<div class="name">${escapeHtml(name)}</div><div class="meta">${kind}</div>`;
-
-  const btn = document.createElement("button");
-  btn.className = "treeBtn";
-  btn.textContent = isSelected ? "Selected" : "Select";
-  btn.onclick = onSelect;
-
-  hdr.appendChild(left);
-  hdr.appendChild(btn);
-
-  box.appendChild(hdr);
-  return box;
+// ---------- Week editor ----------
+function renderWeekEditor() {
+  const week = getSelectedWeek();
+  weekStartDateEl.value = week?.start_date || "";
 }
 
-function isTermSelected(tIdx) {
-  return selected.termIndex === tIdx && selected.weekIndex === null && selected.lessonIndex === null;
-}
-function isWeekSelected(tIdx, wIdx) {
-  return selected.termIndex === tIdx && selected.weekIndex === wIdx && selected.lessonIndex === null;
-}
-function isLessonSelected(tIdx, wIdx, lIdx) {
-  return selected.termIndex === tIdx && selected.weekIndex === wIdx && selected.lessonIndex === lIdx;
-}
+function applyWeekStartDate() {
+  const week = getSelectedWeek();
+  if (!week) return;
 
-function resetSelection() {
-  selected.termIndex = 0;
-  selected.weekIndex = 0;
-  selected.lessonIndex = null;
+  const v = (weekStartDateEl.value || "").trim();
+  if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    setStatus("Week start date must be YYYY-MM-DD.", "error");
+    return;
+  }
+  week.start_date = v || undefined;
+
+  setStatus("Applied week date (not committed yet).", "ok");
+  setTimeout(clearStatus, 1200);
+
+  renderTree();
 }
 
 // ---------- Add week / lesson ----------
 function addWeekToSelectedTerm() {
-  if (!plan) return;
-
-  const tIdx = selected.termIndex ?? 0;
-  const term = plan.terms[tIdx];
+  const term = getSelectedTerm();
   if (!term) return;
 
   term.weeks = term.weeks || [];
   const next = term.weeks.length + 1;
 
   term.weeks.push({
-    week_id: `${term.term_id || `T${tIdx + 1}`}-W${next}`,
+    week_id: `${term.term_id || `T${selected.termIndex+1}`}-W${next}`,
     label: `Week ${next}`,
+    start_date: "",
     lessons: []
   });
 
@@ -248,16 +273,12 @@ function addWeekToSelectedTerm() {
   selected.lessonIndex = null;
 
   renderTree();
+  renderWeekEditor();
   renderEditor();
 }
 
 function addLessonToSelectedWeek() {
-  if (!plan) return;
-  const { termIndex: tIdx, weekIndex: wIdx } = selected;
-
-  const term = plan.terms[tIdx ?? 0];
-  if (!term) return;
-  const week = (term.weeks || [])[wIdx ?? 0];
+  const week = getSelectedWeek();
   if (!week) return;
 
   week.lessons = week.lessons || [];
@@ -280,8 +301,6 @@ function addLessonToSelectedWeek() {
 
 // ---------- Editor ----------
 function renderEditor() {
-  if (!plan) return;
-
   const lesson = getSelectedLesson();
   if (!lesson) {
     editorEmpty.classList.remove("hidden");
@@ -292,16 +311,12 @@ function renderEditor() {
   editorEmpty.classList.add("hidden");
   editorForm.classList.remove("hidden");
 
-  // populate fields
   lessonTitleEl.value = lesson.title || "";
   lessonHomeworkEl.value = lesson.homework || "";
   lessonNotesEl.value = lesson.notes_latex || "";
   notesPreview.innerHTML = "";
 
-  // selected chips
   renderSelectedChips();
-
-  // search results
   renderSyllabusSearch();
   renderTextbookSearch();
 }
@@ -314,76 +329,47 @@ function applyLessonEdits() {
   lesson.homework = lessonHomeworkEl.value || "";
   lesson.notes_latex = lessonNotesEl.value || "";
 
-  setStatus("Applied lesson changes (not saved to GitHub yet).", "ok");
+  setStatus("Applied lesson changes (not committed yet).", "ok");
   setTimeout(clearStatus, 1200);
 
   renderTree();
 }
 
 function moveLesson(delta) {
-  const { termIndex: tIdx, weekIndex: wIdx, lessonIndex: lIdx } = selected;
-  if (lIdx === null) return;
-
   const week = getSelectedWeek();
-  if (!week) return;
+  if (!week || selected.lessonIndex === null) return;
 
   const arr = week.lessons || [];
+  const lIdx = selected.lessonIndex;
   const newIdx = lIdx + delta;
   if (newIdx < 0 || newIdx >= arr.length) return;
 
-  const tmp = arr[lIdx];
-  arr[lIdx] = arr[newIdx];
-  arr[newIdx] = tmp;
-
+  [arr[lIdx], arr[newIdx]] = [arr[newIdx], arr[lIdx]];
   selected.lessonIndex = newIdx;
+
   renderTree();
   renderEditor();
 }
 
 function deleteLesson() {
   const week = getSelectedWeek();
-  if (!week) return;
+  if (!week || selected.lessonIndex === null) return;
 
-  const lIdx = selected.lessonIndex;
-  if (lIdx === null) return;
-
-  week.lessons.splice(lIdx, 1);
+  week.lessons.splice(selected.lessonIndex, 1);
   selected.lessonIndex = null;
 
   renderTree();
   renderEditor();
 }
 
-// ---------- Selection getters ----------
-function getSelectedTerm() {
-  const tIdx = selected.termIndex ?? 0;
-  return (plan?.terms || [])[tIdx] || null;
-}
-function getSelectedWeek() {
-  const term = getSelectedTerm();
-  if (!term) return null;
-  const wIdx = selected.weekIndex ?? 0;
-  return (term.weeks || [])[wIdx] || null;
-}
-function getSelectedLesson() {
-  const week = getSelectedWeek();
-  if (!week) return null;
-  const lIdx = selected.lessonIndex;
-  if (lIdx === null) return null;
-  return (week.lessons || [])[lIdx] || null;
-}
-
-// ---------- Syllabus + Textbook selection ----------
+// ---------- Syllabus + Textbook search ----------
 function renderSyllabusSearch() {
   const q = (syllabusSearch.value || "").trim().toLowerCase();
   const lesson = getSelectedLesson();
   if (!lesson) return;
 
   const items = syllabus
-    .filter(x => {
-      if (!q) return true;
-      return `${x.id} ${x.section} ${x.topic} ${x.text}`.toLowerCase().includes(q);
-    })
+    .filter(x => !q || `${x.id} ${x.section} ${x.topic} ${x.text}`.toLowerCase().includes(q))
     .slice(0, 60);
 
   syllabusResults.innerHTML = "";
@@ -393,8 +379,11 @@ function renderSyllabusSearch() {
 
     const left = document.createElement("div");
     left.className = "text";
-    left.innerHTML = `<div><strong>${escapeHtml(s.id)}</strong> <span class="sub">${escapeHtml(s.section || "")}</span></div>
-                      <div class="sub">${escapeHtml(s.topic || "")}</div>`;
+    left.innerHTML = `
+      <div><strong>${escapeHtml(s.id)}</strong> <span class="sub">${escapeHtml(s.section || "")}</span></div>
+      <div class="sub">${escapeHtml(s.topic || "")}</div>
+      <div class="sub">${escapeHtml(trunc(s.text || "", 140))}</div>
+    `;
 
     const btn = document.createElement("button");
     btn.className = "treeBtn";
@@ -417,10 +406,7 @@ function renderTextbookSearch() {
   if (!lesson) return;
 
   const items = textbooks
-    .filter(x => {
-      if (!q) return true;
-      return `${x.id} ${x.textbook} ${x.label} ${x.detail}`.toLowerCase().includes(q);
-    })
+    .filter(x => !q || `${x.id} ${x.textbook} ${x.label} ${x.detail}`.toLowerCase().includes(q))
     .slice(0, 60);
 
   textbookResults.innerHTML = "";
@@ -430,8 +416,11 @@ function renderTextbookSearch() {
 
     const left = document.createElement("div");
     left.className = "text";
-    left.innerHTML = `<div><strong>${escapeHtml(tb.id)}</strong> <span class="sub">${escapeHtml(tb.textbook || "")}</span></div>
-                      <div class="sub">${escapeHtml(tb.label || "")}</div>`;
+    left.innerHTML = `
+      <div><strong>${escapeHtml(tb.id)}</strong> <span class="sub">${escapeHtml(tb.textbook || "")}</span></div>
+      <div class="sub">${escapeHtml(tb.label || "")}</div>
+      <div class="sub">${escapeHtml(trunc(tb.detail || "", 140))}</div>
+    `;
 
     const btn = document.createElement("button");
     btn.className = "treeBtn";
@@ -452,28 +441,23 @@ function renderSelectedChips() {
   const lesson = getSelectedLesson();
   if (!lesson) return;
 
-  // syllabus chips
   syllabusSelected.innerHTML = "";
   (lesson.syllabus_ids || []).forEach(id => {
-    const chip = makeChip(id, () => {
+    syllabusSelected.appendChild(makeChip(id, () => {
       lesson.syllabus_ids = (lesson.syllabus_ids || []).filter(x => x !== id);
       renderSelectedChips();
-    });
-    syllabusSelected.appendChild(chip);
+    }));
   });
 
-  // textbook chips
   textbookSelected.innerHTML = "";
   (lesson.textbook_ids || []).forEach(id => {
-    const chip = makeChip(id, () => {
+    textbookSelected.appendChild(makeChip(id, () => {
       lesson.textbook_ids = (lesson.textbook_ids || []).filter(x => x !== id);
       renderSelectedChips();
-    });
-    textbookSelected.appendChild(chip);
+    }));
   });
 
-  // refresh math if preview was shown
-  typesetMath().catch(() => {});
+  typesetMath().catch(()=>{});
 }
 
 function makeChip(id, onRemove) {
@@ -490,7 +474,6 @@ function makeChip(id, onRemove) {
 // ---------- Download ----------
 function downloadCurrentPlan() {
   if (!plan) return;
-
   const classId = plan.class_id || classSelect.value || "plan";
   const blob = new Blob([JSON.stringify(plan, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
@@ -498,7 +481,6 @@ function downloadCurrentPlan() {
   a.download = `${classId}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
-
   setStatus("Downloaded plan JSON.", "ok");
   setTimeout(clearStatus, 1200);
 }
@@ -521,7 +503,6 @@ async function commitCurrentPlanToGitHub() {
 
   setStatus(`Fetching current SHA for ${path}…`);
 
-  // GET existing file to obtain sha (required for updates)
   const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`;
   const existing = await ghRequest(getUrl, token);
 
@@ -531,18 +512,13 @@ async function commitCurrentPlanToGitHub() {
   setStatus(`Committing update to ${path} on ${branch}…`);
 
   const putUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
-  const body = {
-    message: `Update plan: ${classId}`,
-    content,
-    sha,
-    branch
-  };
+  const body = { message: `Update plan: ${classId}`, content, sha, branch };
 
   const res = await ghRequest(putUrl, token, "PUT", body);
   setStatus(`Committed successfully.\n${res?.commit?.sha ? "Commit: " + res.commit.sha : ""}`, "ok");
 }
 
-async function ghRequest(url, token, method = "GET", body = null) {
+async function ghRequest(url, token, method="GET", body=null) {
   const res = await fetch(url, {
     method,
     headers: {
@@ -556,7 +532,7 @@ async function ghRequest(url, token, method = "GET", body = null) {
 
   const text = await res.text();
   let json = null;
-  try { json = text ? JSON.parse(text) : null; } catch { /* ignore */ }
+  try { json = text ? JSON.parse(text) : null; } catch {}
 
   if (!res.ok) {
     const msg = json?.message || res.statusText || "GitHub API error";
@@ -565,10 +541,24 @@ async function ghRequest(url, token, method = "GET", body = null) {
   return json;
 }
 
+// ---------- Selection getters ----------
+function getSelectedTerm() {
+  return (plan?.terms || [])[selected.termIndex] || null;
+}
+function getSelectedWeek() {
+  const term = getSelectedTerm();
+  return (term?.weeks || [])[selected.weekIndex] || null;
+}
+function getSelectedLesson() {
+  const week = getSelectedWeek();
+  if (!week || selected.lessonIndex === null) return null;
+  return (week.lessons || [])[selected.lessonIndex] || null;
+}
+
 // ---------- Helpers ----------
-async function loadJSON(url, labelForErrors) {
+async function loadJSON(url, label) {
   const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Failed to load ${labelForErrors}: ${res.status} ${res.statusText}\nURL: ${url}`);
+  if (!res.ok) throw new Error(`Failed to load ${label}: ${res.status} ${res.statusText}\nURL: ${url}`);
   return await res.json();
 }
 
@@ -580,63 +570,40 @@ function getRepoRoot() {
   return url.toString();
 }
 
-function setStatus(msg, kind = "info") {
+function setStatus(msg, kind="info") {
   statusEl.hidden = false;
-  statusEl.className = "status" + (kind === "error" ? " error" : kind === "ok" ? " ok" : "");
+  statusEl.className = "status" + (kind==="error" ? " error" : kind==="ok" ? " ok" : "");
   statusEl.textContent = msg;
 }
-function clearStatus() {
-  statusEl.hidden = true;
-  statusEl.textContent = "";
+function clearStatus(){ statusEl.hidden = true; statusEl.textContent=""; }
+function showError(err){ console.error(err); setStatus(err?.message || String(err), "error"); }
+
+async function typesetMath(){
+  try { if (window.MathJax?.typesetPromise) await window.MathJax.typesetPromise(); } catch {}
 }
 
-function showError(err) {
-  console.error(err);
-  setStatus(err?.message ? err.message : String(err), "error");
-}
-
-async function typesetMath() {
-  try {
-    if (window.MathJax && typeof window.MathJax.typesetPromise === "function") {
-      await window.MathJax.typesetPromise();
-    }
-  } catch (e) {
-    // keep functional even if MathJax fails
-  }
-}
-
-function hydrateGitHubFields() {
+function hydrateGitHubFields(){
   const saved = safeParse(localStorage.getItem("planner_github") || "{}");
   ghOwnerEl.value = saved.owner || "";
   ghRepoEl.value = saved.repo || "";
   ghBranchEl.value = saved.branch || "main";
   ghTokenEl.value = saved.token || "";
 }
-
-function saveGitHubFields() {
+function saveGitHubFields(){
   const payload = {
-    owner: (ghOwnerEl.value || "").trim(),
-    repo: (ghRepoEl.value || "").trim(),
-    branch: (ghBranchEl.value || "main").trim(),
-    token: (ghTokenEl.value || "").trim()
+    owner: (ghOwnerEl.value||"").trim(),
+    repo: (ghRepoEl.value||"").trim(),
+    branch: (ghBranchEl.value||"main").trim(),
+    token: (ghTokenEl.value||"").trim()
   };
   localStorage.setItem("planner_github", JSON.stringify(payload));
 }
+function safeParse(s){ try { return JSON.parse(s); } catch { return {}; } }
 
-function safeParse(s) {
-  try { return JSON.parse(s); } catch { return {}; }
+function escapeHtml(s){
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
 }
-
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function escapeHtmlAllowLatex(s) {
-  // same as escapeHtml (LaTeX is plain text). We are not allowing HTML tags.
-  return escapeHtml(s);
+function trunc(s, n){
+  const t = String(s);
+  return t.length <= n ? t : t.slice(0, n-1) + "…";
 }
