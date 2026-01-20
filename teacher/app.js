@@ -1,8 +1,9 @@
+// Teacher Editor: default-collapsed tree + topic/textbook filter buttons
+
 const treeEl = document.getElementById("tree");
 const statusEl = document.getElementById("status");
 
 const classSelect = document.getElementById("classSelect");
-
 const downloadBtn = document.getElementById("downloadBtn");
 const commitBtn = document.getElementById("commitBtn");
 
@@ -42,6 +43,19 @@ const textbookSelected = document.getElementById("textbookSelected");
 
 const CLASSES = ["12AA_SL","12AA_HL","12AI_SL","11AA_SL","11AA_HL","11AI_SL"];
 
+// --- NEW: filter button containers (injected under search bars)
+let syllabusFilterBar = null;
+let textbookFilterBar = null;
+
+// Canonical IB topic buckets
+const TOPIC_BUCKETS = [
+  { key: "Number and Algebra", match: ["number", "algebra"] },
+  { key: "Functions", match: ["function"] },
+  { key: "Geometry and Trigonometry", match: ["geometry", "trigonometry"] },
+  { key: "Statistics and Probability", match: ["statistics", "probability"] },
+  { key: "Calculus", match: ["calculus"] },
+];
+
 let repoRoot = "";
 let syllabus = [];
 let textbooks = [];
@@ -49,10 +63,15 @@ let plan = null;
 
 let selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
 
+// Default collapsed: everything starts collapsed
 let collapsed = {
   terms: {}, // tIdx -> bool
   weeks: {}  // `${tIdx}-${wIdx}` -> bool
 };
+
+// Active filters
+let activeSyllabusBucket = TOPIC_BUCKETS[0].key; // default first bucket
+let activeTextbookKey = null; // set after load based on available textbooks
 
 init().catch(showError);
 
@@ -74,6 +93,14 @@ async function init() {
     loadJSON(new URL("data/textbook_references.json", repoRoot).toString(), "textbook_references.json"),
   ]);
   clearStatus();
+
+  // Build filter bars
+  injectFilterBars();
+
+  // Default textbook filter = first textbook group encountered
+  const tbKeys = getTextbookKeys();
+  activeTextbookKey = tbKeys[0] || null;
+  renderTextbookFilterButtons();
 
   classSelect.addEventListener("change", () => loadPlanAndRender().catch(showError));
   downloadBtn.addEventListener("click", () => downloadCurrentPlan());
@@ -116,19 +143,22 @@ async function loadPlanAndRender() {
 
   selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
 
+  // Reset collapse state for a new plan (default everything collapsed)
+  collapsed = { terms: {}, weeks: {} };
+
   renderTree();
   renderWeekEditor();
   renderEditor();
 }
 
-// ---------- Tree ----------
+// ---------- Tree (default collapsed) ----------
 function renderTree() {
   treeEl.innerHTML = "";
   if (!plan?.terms) return;
 
   plan.terms.forEach((term, tIdx) => {
     const termKey = String(tIdx);
-    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = false;
+    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true; // default collapsed
 
     const termBox = document.createElement("div");
     termBox.className = "treeItem";
@@ -139,6 +169,17 @@ function renderTree() {
     const left = document.createElement("div");
     left.innerHTML = `<div class="treeTitle">${escapeHtml(term.label || term.term_id || `Term ${tIdx+1}`)}</div>
                       <div class="treeMeta">Term</div>`;
+    left.style.cursor = "pointer";
+    left.onclick = () => {
+      selected.termIndex = tIdx;
+      selected.weekIndex = 0;
+      selected.lessonIndex = null;
+
+      // Expand just this term when selected (keeps "starts collapsed" behaviour)
+      collapsed.terms[termKey] = false;
+
+      renderTree(); renderWeekEditor(); renderEditor();
+    };
 
     const btn = document.createElement("button");
     btn.className = "iconBtn";
@@ -150,23 +191,13 @@ function renderTree() {
     hdr.appendChild(btn);
     termBox.appendChild(hdr);
 
-    // select term on click (left area)
-    left.style.cursor = "pointer";
-    left.onclick = () => {
-      selected.termIndex = tIdx;
-      selected.weekIndex = 0;
-      selected.lessonIndex = null;
-      collapsed.terms[termKey] = false;
-      renderTree(); renderWeekEditor(); renderEditor();
-    };
-
     if (!collapsed.terms[termKey]) {
       const termChildren = document.createElement("div");
       termChildren.className = "treeChildren";
 
       (term.weeks || []).forEach((week, wIdx) => {
         const wkKey = `${tIdx}-${wIdx}`;
-        if (collapsed.weeks[wkKey] === undefined) collapsed.weeks[wkKey] = false;
+        if (collapsed.weeks[wkKey] === undefined) collapsed.weeks[wkKey] = true; // default collapsed
 
         const weekBox = document.createElement("div");
         weekBox.className = "treeItem";
@@ -178,13 +209,16 @@ function renderTree() {
         const dateLabel = week.start_date ? ` • starts ${escapeHtml(week.start_date)}` : "";
         wLeft.innerHTML = `<div class="treeTitle">${escapeHtml(week.label || week.week_id || `Week ${wIdx+1}`)}</div>
                            <div class="treeMeta">Week${dateLabel}</div>`;
-
         wLeft.style.cursor = "pointer";
         wLeft.onclick = () => {
           selected.termIndex = tIdx;
           selected.weekIndex = wIdx;
           selected.lessonIndex = null;
+
+          // Expand this week when selected
+          collapsed.terms[String(tIdx)] = false;
           collapsed.weeks[wkKey] = false;
+
           renderTree(); renderWeekEditor(); renderEditor();
         };
 
@@ -212,6 +246,7 @@ function renderTree() {
               selected.termIndex = tIdx;
               selected.weekIndex = wIdx;
               selected.lessonIndex = lIdx;
+              // Keep current expand state; selecting lesson shouldn't auto-expand anything else
               renderWeekEditor();
               renderEditor();
             };
@@ -271,6 +306,10 @@ function addWeekToSelectedTerm() {
 
   selected.weekIndex = term.weeks.length - 1;
   selected.lessonIndex = null;
+
+  // Expand selected path
+  collapsed.terms[String(selected.termIndex)] = false;
+  collapsed.weeks[`${selected.termIndex}-${selected.weekIndex}`] = false;
 
   renderTree();
   renderWeekEditor();
@@ -362,15 +401,72 @@ function deleteLesson() {
   renderEditor();
 }
 
-// ---------- Syllabus + Textbook search ----------
+// ---------- NEW: Filter bars ----------
+function injectFilterBars() {
+  // Syllabus filter bar
+  syllabusFilterBar = document.createElement("div");
+  syllabusFilterBar.className = "filterBar";
+  syllabusSearch.insertAdjacentElement("afterend", syllabusFilterBar);
+  renderSyllabusFilterButtons();
+
+  // Textbook filter bar
+  textbookFilterBar = document.createElement("div");
+  textbookFilterBar.className = "filterBar";
+  textbookSearch.insertAdjacentElement("afterend", textbookFilterBar);
+  renderTextbookFilterButtons();
+}
+
+function renderSyllabusFilterButtons() {
+  syllabusFilterBar.innerHTML = "";
+  for (const b of TOPIC_BUCKETS) {
+    const btn = document.createElement("button");
+    btn.className = "filterBtn" + (activeSyllabusBucket === b.key ? " active" : "");
+    btn.textContent = b.key;
+    btn.onclick = () => {
+      activeSyllabusBucket = b.key;
+      renderSyllabusFilterButtons();
+      renderSyllabusSearch();
+    };
+    syllabusFilterBar.appendChild(btn);
+  }
+}
+
+function getTextbookKeys() {
+  const keys = [...new Set(textbooks.map(t => (t.textbook || "").trim()).filter(Boolean))];
+  keys.sort((a,b)=>a.localeCompare(b));
+  return keys;
+}
+
+function renderTextbookFilterButtons() {
+  const keys = getTextbookKeys();
+  if (!activeTextbookKey) activeTextbookKey = keys[0] || null;
+
+  textbookFilterBar.innerHTML = "";
+  for (const k of keys) {
+    const btn = document.createElement("button");
+    btn.className = "filterBtn" + (activeTextbookKey === k ? " active" : "");
+    btn.textContent = k;
+    btn.onclick = () => {
+      activeTextbookKey = k;
+      renderTextbookFilterButtons();
+      renderTextbookSearch();
+    };
+    textbookFilterBar.appendChild(btn);
+  }
+}
+
+// ---------- Syllabus + Textbook listing (filtered) ----------
 function renderSyllabusSearch() {
   const q = (syllabusSearch.value || "").trim().toLowerCase();
   const lesson = getSelectedLesson();
-  if (!lesson) return;
+  if (!lesson) { syllabusResults.innerHTML = ""; return; }
+
+  const bucket = TOPIC_BUCKETS.find(b => b.key === activeSyllabusBucket);
 
   const items = syllabus
-    .filter(x => !q || `${x.id} ${x.section} ${x.topic} ${x.text}`.toLowerCase().includes(q))
-    .slice(0, 60);
+    .filter(s => inSyllabusBucket(s, bucket))
+    .filter(s => !q || `${s.id} ${s.section} ${s.topic} ${s.text}`.toLowerCase().includes(q))
+    .slice(0, 80);
 
   syllabusResults.innerHTML = "";
   for (const s of items) {
@@ -382,7 +478,7 @@ function renderSyllabusSearch() {
     left.innerHTML = `
       <div><strong>${escapeHtml(s.id)}</strong> <span class="sub">${escapeHtml(s.section || "")}</span></div>
       <div class="sub">${escapeHtml(s.topic || "")}</div>
-      <div class="sub">${escapeHtml(trunc(s.text || "", 140))}</div>
+      <div class="sub">${escapeHtml(trunc(s.text || "", 170))}</div>
     `;
 
     const btn = document.createElement("button");
@@ -400,14 +496,21 @@ function renderSyllabusSearch() {
   }
 }
 
+function inSyllabusBucket(s, bucket) {
+  if (!bucket) return true;
+  const hay = `${s.topic || ""} ${s.section || ""}`.toLowerCase();
+  return bucket.match.some(m => hay.includes(m));
+}
+
 function renderTextbookSearch() {
   const q = (textbookSearch.value || "").trim().toLowerCase();
   const lesson = getSelectedLesson();
-  if (!lesson) return;
+  if (!lesson) { textbookResults.innerHTML = ""; return; }
 
   const items = textbooks
-    .filter(x => !q || `${x.id} ${x.textbook} ${x.label} ${x.detail}`.toLowerCase().includes(q))
-    .slice(0, 60);
+    .filter(tb => !activeTextbookKey || (tb.textbook || "").trim() === activeTextbookKey)
+    .filter(tb => !q || `${tb.id} ${tb.textbook} ${tb.label} ${tb.detail}`.toLowerCase().includes(q))
+    .slice(0, 120);
 
   textbookResults.innerHTML = "";
   for (const tb of items) {
@@ -419,7 +522,7 @@ function renderTextbookSearch() {
     left.innerHTML = `
       <div><strong>${escapeHtml(tb.id)}</strong> <span class="sub">${escapeHtml(tb.textbook || "")}</span></div>
       <div class="sub">${escapeHtml(tb.label || "")}</div>
-      <div class="sub">${escapeHtml(trunc(tb.detail || "", 140))}</div>
+      <div class="sub">${escapeHtml(trunc(tb.detail || "", 170))}</div>
     `;
 
     const btn = document.createElement("button");
