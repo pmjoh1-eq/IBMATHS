@@ -1,0 +1,957 @@
+const SYLLABUS_OBJECTIVES =[
+  {
+    "id": "AA_SL_1-1",
+    "section": "AA SL 1.1",
+    "topic": "AA SL Number and Algebra",
+    "text": "Operations with numbers in the form $a \\times 10^k$ where $1 \\le a < 10$ and $k$ is an integer."
+  },
+  {
+    "id": "AA_SL_1-2",
+    "section": "AA SL 1.2",
+    "topic": "AA SL Number and Algebra",
+    "text": "Arithmetic sequences and series; use of the formulae for the $n$\\text{th} term and the sum of the first $n$ terms; sigma notation; applications and real-life modelling."
+  },
+  {
+    "id": "AA_SL_1-3",
+    "section": "AA SL 1.3",
+    "topic": "AA SL Number and Algebra",
+    "text": "Geometric sequences and series; formulae for the $n$\\text{th} term and sum; sigma notation; applications."
+  },
+  {
+    "id": "AA_SL_1-4",
+    "section": "AA SL 1.4",
+    "topic": "AA SL Number and Algebra",
+    "text": "Financial applications: compound interest and depreciation."
+  },
+  {
+    "id": "AA_SL_1-5",
+    "section": "AA SL 1.5",
+    "topic": "AA SL Number and Algebra",
+    "text": "Laws of exponents (integer exponents); introduction to logarithms (base 10 and $e$); numerical evaluation using technology."
+  },
+  {
+    "id": "AA_SL_1-6",
+    "section": "AA SL 1.6",
+    "topic": "AA SL Number and Algebra",
+    "text": "Simple deductive proof; LHS to RHS structure; equality and identity notation."
+  },
+  {
+    "id": "AA_SL_1-7",
+    "section": "AA SL 1.7",
+    "topic": "AA SL Number and Algebra",
+    "text": "Exponents and logarithms; rational exponents; laws of logarithms; change of base; solving exponential equations."
+  },
+  {
+    "id": "AA_SL_1-8",
+    "section": "AA SL 1.8",
+    "topic": "AA SL Number and Algebra",
+    "text": "Sum of infinite convergent geometric sequences."
+  },
+  {
+    "id": "AA_SL_1-9",
+    "section": "AA SL 1.9",
+    "topic": "AA SL Number and Algebra",
+    "text": "Binomial theorem; Pascal's triangle; combinations ${n \\choose r}$."
+  },
+  {
+    "id": "AA_HL_1-10",
+    "section": "AA HL 1.10",
+    "topic": "AA HL Number and Algebra",
+    "text": "Counting principles: permutations and combinations; binomial theorem for fractional or negative indices."
+  },
+  {
+    "id": "AA_HL_1-11",
+    "section": "AA HL 1.11",
+    "topic": "AA HL Number and Algebra",
+    "text": "Partial fractions."
+  },
+  {
+    "id": "AA_HL_1-12",
+    "section": "AA HL 1.12",
+    "topic": "AA HL Number and Algebra",
+    "text": "Complex numbers (introduction): definition of $i$; Cartesian form $z = a + bi$; real and imaginary parts, conjugate, modulus, argument; complex plane."
+  },
+  {
+    "id": "AA_HL_1-13",
+    "section": "AA HL 1.13",
+    "topic": "AA HL Number and Algebra",
+    "text": "Modulus-argument (polar) form; Euler form; sums, products, and quotients in all forms with geometric interpretation."
+  },
+  {
+    "id": "AA_HL_1-14",
+    "section": "AA HL 1.14",
+    "topic": "AA HL Number and Algebra",
+    "text": "Complex conjugate roots; De Moivre's theorem; powers and roots of complex numbers."
+  },
+  {
+    "id": "AA_HL_1-15",
+    "section": "AA HL 1.15",
+    "topic": "AA HL Number and Algebra",
+    "text": "Proof by induction and contradiction; use of counterexamples."
+  },
+  {
+    "id": "AA_HL_1-16",
+    "section": "AA HL 1.16",
+    "topic": "AA HL Number and Algebra",
+    "text": "Systems of linear equations (up to 3 variables); unique, infinite, or no solutions."
+  },
+  {
+    "id": "AA_SL_2-1",
+    "section": "AA SL 2.1",
+    "topic": "AA SL Functions",
+    "text": "Different forms of the equation of a straight line; gradient and intercepts; parallel lines ($m_1 = m_2$) and perpendicular lines ($m_1 m_2 = -1$)."
+  },
+  {
+    "id": "AA_SL_2-2",
+    "section": "AA SL 2.2",
+    "topic": "AA SL Functions",
+    "text": "Concept of a function: domain, range, and graph; function notation; modelling with functions; inverse functions and reflection in $y = x$."
+  },
+  {
+    "id": "AA_SL_2-3",
+    "section": "AA SL 2.3",
+    "topic": "AA SL Functions",
+    "text": "Graphing functions: sketches from context; graphs using technology; graphing sums and differences of functions."
+  },
+  {
+    "id": "AA_SL_2-4",
+    "section": "AA SL 2.4",
+    "topic": "AA SL Functions",
+    "text": "Key features of graphs; intersections using technology; composite and inverse functions; identity function."
+  },
+  {
+    "id": "AA_SL_2-6",
+    "section": "AA SL 2.6",
+    "topic": "AA SL Functions",
+    "text": "Quadratic functions and graph forms: standard form $f(x) = ax^2 + bx + c$; factor form $f(x) = a(x - p)(x - q)$; vertex form $f(x) = a(x - h)^2 + k$."
+  },
+  {
+    "id": "AA_SL_2-7",
+    "section": "AA SL 2.7",
+    "topic": "AA SL Functions",
+    "text": "Solving quadratic equations and inequalities; discriminant $\\Delta = b^2 - 4ac$; reciprocal function and its self-inverse nature; rational functions $f(x) = \\dfrac{ax + b}{cx + d}$ and asymptotes."
+  },
+  {
+    "id": "AA_SL_2-9",
+    "section": "AA SL 2.9",
+    "topic": "AA SL Functions",
+    "text": "Exponential and logarithmic functions: $f(x) = a^x$, $f(x) = e^x$, $f(x) = \\log_a x$, $f(x) = \\ln x$."
+  },
+  {
+    "id": "AA_SL_2-10",
+    "section": "AA SL 2.10",
+    "topic": "AA SL Functions",
+    "text": "Solving equations graphically and analytically; use of technology; real-life applications."
+  },
+  {
+    "id": "AA_SL_2-11",
+    "section": "AA SL 2.11",
+    "topic": "AA SL Functions",
+    "text": "Graph transformations: translations and reflections; vertical and horizontal stretches; composite transformations."
+  },
+  {
+    "id": "AA_HL_2-12",
+    "section": "AA HL 2.12",
+    "topic": "AA HL Functions",
+    "text": "Polynomial functions: graphs, equations, zeros, and roots; factor and remainder theorems; sum and product of roots."
+  },
+  {
+    "id": "AA_HL_2-13",
+    "section": "AA HL 2.13",
+    "topic": "AA HL Functions",
+    "text": "Rational functions."
+  },
+  {
+    "id": "AA_HL_2-14",
+    "section": "AA HL 2.14",
+    "topic": "AA HL Functions",
+    "text": "Odd and even functions; inverse functions with domain restrictions; self-inverse functions."
+  },
+  {
+    "id": "AA_HL_2-15",
+    "section": "AA HL 2.15",
+    "topic": "AA HL Functions",
+    "text": "Solving inequalities of the form $g(x) \\ge f(x)$ using graphical and analytical methods."
+  },
+  {
+    "id": "AA_HL_2-16",
+    "section": "AA HL 2.16",
+    "topic": "AA HL Functions",
+    "text": "Modulus equations and inequalities."
+  },
+  {
+    "id": "AA_SL_3-1",
+    "section": "AA SL 3.1",
+    "topic": "AA SL Geometry and Trigonometry",
+    "text": "Distance and midpoint in 3D space; volume and surface area of 3D solids (pyramids, cones, spheres, hemispheres, and combinations); angle between lines and between a line and a plane."
+  },
+  {
+    "id": "AA_SL_3-2",
+    "section": "AA SL 3.2",
+    "topic": "AA SL Geometry and Trigonometry",
+    "text": "Sine, cosine, and tangent ratios; sine and cosine rules; area of a triangle."
+  },
+  {
+    "id": "AA_SL_3-3",
+    "section": "AA SL 3.3",
+    "topic": "AA SL Geometry and Trigonometry",
+    "text": "Applications of trigonometry in right and non-right triangles; Pythagoras's theorem; angles of elevation and depression; constructing labelled diagrams."
+  },
+  {
+    "id": "AA_SL_3-4",
+    "section": "AA SL 3.4",
+    "topic": "AA SL Geometry and Trigonometry",
+    "text": "The circle; radian measure of angles; arc length and sector area."
+  },
+  {
+    "id": "AA_SL_3-5",
+    "section": "AA SL 3.5",
+    "topic": "AA SL Geometry and Trigonometry",
+    "text": "Definitions of $\\sin \\theta$ and $\\cos \\theta$ using the unit circle; definition of $\\tan \\theta = \\dfrac{\\sin \\theta}{\\cos \\theta}$; ambiguous case in the sine rule."
+  },
+  {
+    "id": "AA_SL_3-6",
+    "section": "AA SL 3.6",
+    "topic": "AA SL Geometry and Trigonometry",
+    "text": "Pythagorean identity $\\cos^2 \\theta + \\sin^2 \\theta = 1$; double angle identities for sine and cosine; relationships between trigonometric ratios."
+  },
+  {
+    "id": "AA_SL_3-7",
+    "section": "AA SL 3.7",
+    "topic": "AA SL Geometry and Trigonometry",
+    "text": "Circular functions $\\sin x$, $\\cos x$, $\\tan x$; amplitude, periodic nature, and graphs; forms such as $f(x) = a\\sin(b(x + c)) + d$ and related transformations."
+  },
+  {
+    "id": "AA_SL_3-8",
+    "section": "AA SL 3.8",
+    "topic": "AA SL Geometry and Trigonometry",
+    "text": "Solving trigonometric equations in a finite interval using graphical and analytical methods, including quadratic forms involving $\\sin x$, $\\cos x$, or $\\tan x$."
+  },
+  {
+    "id": "AA_HL_3-9",
+    "section": "AA HL 3.9",
+    "topic": "AA HL Geometry and Trigonometry",
+    "text": "Reciprocal trigonometric ratios: $\\sec \\theta$, $\\csc \\theta$, $\\cot \\theta$; Pythagorean identities; inverse trigonometric functions $\\arcsin$, $\\arccos$, $\\arctan$; graphs, domains, and ranges."
+  },
+  {
+    "id": "AA_HL_3-10",
+    "section": "AA HL 3.10",
+    "topic": "AA HL Geometry and Trigonometry",
+    "text": "Compound angle identities; double angle identity for $\\tan$."
+  },
+  {
+    "id": "AA_HL_3-11",
+    "section": "AA HL 3.11",
+    "topic": "AA HL Geometry and Trigonometry",
+    "text": "Trigonometric function relationships and symmetry properties of graphs."
+  },
+  {
+    "id": "AA_HL_3-12",
+    "section": "AA HL 3.12",
+    "topic": "AA HL Geometry and Trigonometry",
+    "text": "Vectors: position and displacement; representation with line segments; base vectors $\\mathbf{i}, \\mathbf{j}, \\mathbf{k}$; components and magnitude; geometric proofs with vectors."
+  },
+  {
+    "id": "AA_HL_3-13",
+    "section": "AA HL 3.13",
+    "topic": "AA HL Geometry and Trigonometry",
+    "text": "Scalar product (dot product); angle between vectors; perpendicular and parallel vectors."
+  },
+  {
+    "id": "AA_HL_3-14",
+    "section": "AA HL 3.14",
+    "topic": "AA HL Geometry and Trigonometry",
+    "text": "Vector equation of a line $\\mathbf{r} = \\mathbf{a} + \\lambda \\mathbf{b}$; angles between lines; applications in kinematics."
+  },
+  {
+    "id": "AA_HL_3-15",
+    "section": "AA HL 3.15",
+    "topic": "AA HL Geometry and Trigonometry",
+    "text": "Coincident, parallel, intersecting, and skew lines; points of intersection."
+  },
+  {
+    "id": "AA_HL_3-16",
+    "section": "AA HL 3.16",
+    "topic": "AA HL Geometry and Trigonometry",
+    "text": "Vector product (cross product) $\\mathbf{v} \\times \\mathbf{w}$; properties and geometric meaning of $\\lvert \\mathbf{v} \\times \\mathbf{w} \\rvert$."
+  },
+  {
+    "id": "AA_HL_3-17",
+    "section": "AA HL 3.17",
+    "topic": "AA HL Geometry and Trigonometry",
+    "text": "Vector and Cartesian equations of a plane: vector equation $\\mathbf{r} = \\mathbf{a} + \\lambda \\mathbf{b} + \\mu \\mathbf{c}$ and $\\mathbf{r} \\cdot \\mathbf{n} = \\mathbf{a} \\cdot \\mathbf{n}$; Cartesian form $ax + by + cz = d$."
+  },
+  {
+    "id": "AA_HL_3-18",
+    "section": "AA HL 3.18",
+    "topic": "AA HL Geometry and Trigonometry",
+    "text": "Intersections of a line and a plane, of two planes, and of three planes; angles between a line and a plane and between two planes."
+  },
+  {
+    "id": "AA_SL_4-1",
+    "section": "AA SL 4.1",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Population, sample, and random sample; discrete and continuous data; bias and reliability; outliers and sampling techniques."
+  },
+  {
+    "id": "AA_SL_4-2",
+    "section": "AA SL 4.2",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Data presentation: frequency tables and histograms; cumulative frequency and graphs; finding the median, quartiles, percentiles, range, and IQR; box and whisker diagrams."
+  },
+  {
+    "id": "AA_SL_4-3",
+    "section": "AA SL 4.3",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Central tendency: mean, median, mode; estimation from grouped data; modal class; dispersion: IQR, standard deviation, variance; effects of constant changes; quartiles of discrete data."
+  },
+  {
+    "id": "AA_SL_4-4",
+    "section": "AA SL 4.4",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Linear correlation and Pearson's correlation; scatter plots and lines of best fit; regression line of $y$ on $x$; prediction and interpretation of parameters $a$ and $b$ in $y = ax + b$."
+  },
+  {
+    "id": "AA_SL_4-5",
+    "section": "AA SL 4.5",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Trial, outcome, and relative frequency; sample space and event; complementary events; expected occurrences."
+  },
+  {
+    "id": "AA_SL_4-6",
+    "section": "AA SL 4.6",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Venn, tree, and sample space diagrams; combined events; mutually exclusive, conditional, and independent events."
+  },
+  {
+    "id": "AA_SL_4-7",
+    "section": "AA SL 4.7",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Discrete random variables and distributions; expected value (mean); applications."
+  },
+  {
+    "id": "AA_SL_4-8",
+    "section": "AA SL 4.8",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Binomial distribution; mean and variance."
+  },
+  {
+    "id": "AA_SL_4-9",
+    "section": "AA SL 4.9",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Normal distribution curve; properties and diagrams; normal and inverse normal calculations."
+  },
+  {
+    "id": "AA_SL_4-10",
+    "section": "AA SL 4.10",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Regression line of $x$ on $y$ and its use for predictions."
+  },
+  {
+    "id": "AA_SL_4-11",
+    "section": "AA SL 4.11",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Conditional probability; conditional probabilities; independent events."
+  },
+  {
+    "id": "AA_SL_4-12",
+    "section": "AA SL 4.12",
+    "topic": "AA SL Statistics and Probability",
+    "text": "Standardization and the normal distribution; standardization ($z$-values); inverse normal with unknown mean or standard deviation."
+  },
+  {
+    "id": "AA_HL_4-13",
+    "section": "AA HL 4.13",
+    "topic": "AA HL Statistics and Probability",
+    "text": "Bayes' theorem (up to three events)."
+  },
+  {
+    "id": "AA_HL_4-14",
+    "section": "AA HL 4.14",
+    "topic": "AA HL Statistics and Probability",
+    "text": "Variance of discrete random variables; continuous random variables and density functions; mode and median of continuous random variables; mean, variance, and standard deviation (discrete and continuous); effects of linear transformations of $X$."
+  },
+  {
+    "id": "AA_SL_5-1",
+    "section": "AA SL 5.1",
+    "topic": "AA SL Calculus",
+    "text": "Concept of a limit; derivative as gradient function and rate of change."
+  },
+  {
+    "id": "AA_SL_5-2",
+    "section": "AA SL 5.2",
+    "topic": "AA SL Calculus",
+    "text": "Increasing and decreasing functions; interpretation of $f'(x) > 0$, $f'(x) = 0$, $f'(x) < 0$."
+  },
+  {
+    "id": "AA_SL_5-3",
+    "section": "AA SL 5.3",
+    "topic": "AA SL Calculus",
+    "text": "Derivative of $f(x) = ax^n$ is $f'(x) = anx^{n-1}$ for $n \\in \\mathbb{Z}$; derivatives of polynomial functions with integer exponents."
+  },
+  {
+    "id": "AA_SL_5-4",
+    "section": "AA SL 5.4",
+    "topic": "AA SL Calculus",
+    "text": "Tangents and normals at a point; equations of tangents and normals."
+  },
+  {
+    "id": "AA_SL_5-5",
+    "section": "AA SL 5.5",
+    "topic": "AA SL Calculus",
+    "text": "Integration as anti-differentiation; use of boundary conditions; definite integrals with technology; area under the curve $y = f(x)$ for $f(x) > 0$."
+  },
+  {
+    "id": "AA_SL_5-6",
+    "section": "AA SL 5.6",
+    "topic": "AA SL Calculus",
+    "text": "Derivatives of $x^n$ (for $n \\in \\mathbb{Q}$), $\\sin x$, $\\cos x$, $e^x$, $\\ln x$; sum, multiple, chain, product, and quotient rules."
+  },
+  {
+    "id": "AA_SL_5-7",
+    "section": "AA SL 5.7",
+    "topic": "AA SL Calculus",
+    "text": "Second derivative; relationship between $f$, $f'$, $f''$ and graphical behavior."
+  },
+  {
+    "id": "AA_SL_5-8",
+    "section": "AA SL 5.8",
+    "topic": "AA SL Calculus",
+    "text": "Local maxima and minima; tests for extrema; optimization; points of inflection."
+  },
+  {
+    "id": "AA_SL_5-9",
+    "section": "AA SL 5.9",
+    "topic": "AA SL Calculus",
+    "text": "Kinematics: displacement, velocity, acceleration; total distance travelled."
+  },
+  {
+    "id": "AA_SL_5-10",
+    "section": "AA SL 5.10",
+    "topic": "AA SL Calculus",
+    "text": "Indefinite integrals; composite functions; reverse chain rule."
+  },
+  {
+    "id": "AA_SL_5-11",
+    "section": "AA SL 5.11",
+    "topic": "AA SL Calculus",
+    "text": "Definite integrals (analytically); area under curves (positive or negative); area between curves."
+  },
+  {
+    "id": "AA_HL_5-12",
+    "section": "AA HL 5.12",
+    "topic": "AA HL Calculus",
+    "text": "Continuity and differentiability; convergence and divergence of limits; higher-order derivatives."
+  },
+  {
+    "id": "AA_HL_5-13",
+    "section": "AA HL 5.13",
+    "topic": "AA HL Calculus",
+    "text": "Evaluation of limits; repeated use of l'H\\^opital's rule."
+  },
+  {
+    "id": "AA_HL_5-14",
+    "section": "AA HL 5.14",
+    "topic": "AA HL Calculus",
+    "text": "Implicit differentiation; related rates of change; optimization problems."
+  },
+  {
+    "id": "AA_HL_5-15",
+    "section": "AA HL 5.15",
+    "topic": "AA HL Calculus",
+    "text": "Derivatives of $\\tan x$, $\\sec x$, $\\csc x$, $\\cot x$, $a^x$, $\\log_a x$, $\\arcsin x$, $\\arccos x$, $\\arctan x$; indefinite integrals of these functions; composites with linear functions; partial fractions in integrals."
+  },
+  {
+    "id": "AA_HL_5-16",
+    "section": "AA HL 5.16",
+    "topic": "AA HL Calculus",
+    "text": "Integration by substitution; integration by parts (including repeated)."
+  },
+  {
+    "id": "AA_HL_5-17",
+    "section": "AA HL 5.17",
+    "topic": "AA HL Calculus",
+    "text": "Area under a curve to the $y$-axis; volumes of revolution about the $x$-axis or $y$-axis."
+  },
+  {
+    "id": "AA_HL_5-18",
+    "section": "AA HL 5.18",
+    "topic": "AA HL Calculus",
+    "text": "First-order differential equations; Euler's method; separable and homogeneous differential equations; integrating factor method."
+  },
+  {
+    "id": "AA_HL_5-19",
+    "section": "AA HL 5.19",
+    "topic": "AA HL Calculus",
+    "text": "Maclaurin series: expansions for $e^x$, $\\sin x$, $\\cos x$, $\\ln(1 + x)$, $(1 + x)^p$ for $p \\in \\mathbb{Q}$; use of substitution, integration, and differentiation to find other series."
+  },
+  {
+    "id": "AI_SL_1-1",
+    "section": "AI SL 1.1",
+    "topic": "AI SL Number and Algebra",
+    "text": "Operations with numbers in the form $a \\times 10^k$ where $1 \\le a < 10$ and $k$ is an integer."
+  },
+  {
+    "id": "AI_SL_1-2",
+    "section": "AI SL 1.2",
+    "topic": "AI SL Number and Algebra",
+    "text": "Arithmetic sequences and series; use of the formulae for the $n$\\text{th} term and the sum of the first $n$ terms of the sequence; use of sigma notation for sums of arithmetic sequences; applications; analysis, interpretation and prediction where a model is not perfectly arithmetic in real life."
+  },
+  {
+    "id": "AI_SL_1-3",
+    "section": "AI SL 1.3",
+    "topic": "AI SL Number and Algebra",
+    "text": "Geometric sequences and series; use of the formulae for the $n$\\text{th} term and the sum of the first $n$ terms of the sequence; use of sigma notation for the sums of geometric sequences; applications."
+  },
+  {
+    "id": "AI_SL_1-4",
+    "section": "AI SL 1.4",
+    "topic": "AI SL Number and Algebra",
+    "text": "Financial applications of geometric sequences and series, including compound interest and annual depreciation."
+  },
+  {
+    "id": "AI_SL_1-5",
+    "section": "AI SL 1.5",
+    "topic": "AI SL Number and Algebra",
+    "text": "Laws of exponents with integer exponents; introduction to logarithms with base 10 and $e$; numerical evaluation of logarithms using technology."
+  },
+  {
+    "id": "AI_SL_1-6",
+    "section": "AI SL 1.6",
+    "topic": "AI SL Number and Algebra",
+    "text": "Approximation: decimal places and significant figures; upper and lower bounds of rounded numbers; percentage errors; estimation."
+  },
+  {
+    "id": "AI_SL_1-7",
+    "section": "AI SL 1.7",
+    "topic": "AI SL Number and Algebra",
+    "text": "Amortization and annuities using technology."
+  },
+  {
+    "id": "AI_SL_1-8",
+    "section": "AI SL 1.8",
+    "topic": "AI SL Number and Algebra",
+    "text": "Use of technology to solve systems of linear equations in up to 3 variables and polynomial equations."
+  },
+  {
+    "id": "AI_HL_1-9",
+    "section": "AI HL 1.9",
+    "topic": "AI HL Number and Algebra",
+    "text": "Laws of logarithms: $\\log_a(xy) = \\log_a x + \\log_a y$, $\\log_a(x/y) = \\log_a x - \\log_a y$, $\\log_a(x^m) = m \\log_a x$ for $a, x, y > 0$."
+  },
+  {
+    "id": "AI_HL_1-10",
+    "section": "AI HL 1.10",
+    "topic": "AI HL Number and Algebra",
+    "text": "Simplifying expressions, both numerically and algebraically, involving rational exponents."
+  },
+  {
+    "id": "AI_HL_1-11",
+    "section": "AI HL 1.11",
+    "topic": "AI HL Number and Algebra",
+    "text": "The sum of infinite geometric sequences."
+  },
+  {
+    "id": "AI_HL_1-12",
+    "section": "AI HL 1.12",
+    "topic": "AI HL Number and Algebra",
+    "text": "Complex numbers: the number $i$ such that $i^2 = -1$; Cartesian form $z = a + bi$; real part, imaginary part, conjugate, modulus and argument; calculations of sums, differences, products and quotients by hand and with technology; calculating powers of complex numbers in Cartesian form with technology; the complex plane; complex numbers as solutions to quadratic equations of the form $ax^2 + bx + c = 0$, $a \\ne 0$, with real coefficients where $b^2 - 4ac < 0$."
+  },
+  {
+    "id": "AI_HL_1-13",
+    "section": "AI HL 1.13",
+    "topic": "AI HL Number and Algebra",
+    "text": "Modulus–argument (polar) form $z = r \\cos \\theta + i r \\sin \\theta = r\\,\\mathrm{cis}\\,\\theta$ and exponential form $z = re^{i\\theta}$; conversion between Cartesian, polar and exponential forms by hand and with technology; calculation of products, quotients and integer powers in polar or exponential forms; adding sinusoidal functions with the same frequencies but different phase shift angles; geometric interpretation of complex numbers."
+  },
+  {
+    "id": "AI_HL_1-14",
+    "section": "AI HL 1.14",
+    "topic": "AI HL Number and Algebra",
+    "text": "Definition of a matrix and the terms element, row, column and order for $m \\times n$ matrices; algebra of matrices including equality, addition, subtraction and multiplication by a scalar for $m \\times n$ matrices; multiplication of matrices; properties of matrix multiplication such as associativity, distributivity and non-commutativity; identity and zero matrices; determinants and inverses of $n \\times n$ matrices with technology, and by hand for $2 \\times 2$ matrices; awareness that a system of linear equations can be written in the form $A\\mathbf{x} = \\mathbf{b}$; solution of systems of equations using the inverse matrix."
+  },
+  {
+    "id": "AI_HL_1-15",
+    "section": "AI HL 1.15",
+    "topic": "AI HL Number and Algebra",
+    "text": "Eigenvalues and eigenvectors; characteristic polynomial of $2 \\times 2$ matrices; diagonalization of $2 \\times 2$ matrices (restricted to the case where there are distinct real eigenvalues); applications to powers of $2 \\times 2$ matrices."
+  },
+  {
+    "id": "AI_SL_2-1",
+    "section": "AI SL 2.1",
+    "topic": "AI SL Functions",
+    "text": "Different forms of the equation of a straight line; gradient and intercepts; lines with gradients $m_1$ and $m_2$; parallel lines with $m_1 = m_2$; perpendicular lines with $m_1 m_2 = -1$."
+  },
+  {
+    "id": "AI_SL_2-2",
+    "section": "AI SL 2.2",
+    "topic": "AI SL Functions",
+    "text": "Concept of a function, domain, range and graph; function notation such as $f(x)$, $v(t)$, $C(n)$; the concept of a function as a mathematical model; informal concept that an inverse function reverses or undoes the effect of a function; inverse function as a reflection in the line $y = x$ and the notation $f^{-1}(x)$."
+  },
+  {
+    "id": "AI_SL_2-3",
+    "section": "AI SL 2.3",
+    "topic": "AI SL Functions",
+    "text": "The graph of a function and its equation $y = f(x)$; creating a sketch from given information or from a context, including transferring a graph from screen to paper; using technology to graph functions including their sums and differences."
+  },
+  {
+    "id": "AI_SL_2-4",
+    "section": "AI SL 2.4",
+    "topic": "AI SL Functions",
+    "text": "Determining key features of graphs; finding the point of intersection of two curves or lines using technology."
+  },
+  {
+    "id": "AI_SL_2-5",
+    "section": "AI SL 2.5",
+    "topic": "AI SL Functions",
+    "text": "Modelling with linear models $f(x) = mx + c$; quadratic models $f(x) = ax^2 + bx + c$ ($a \\ne 0$) including axis of symmetry, vertex, zeros, roots and intercepts on the $x$- and $y$-axes; exponential growth and decay models such as $f(x) = k a^x + c$, $f(x) = k a^{-x} + c$ for $a > 0$, and $f(x) = k e^{rx} + c$ with equation of a horizontal asymptote; direct and inverse variation $f(x) = a x^n$ for $n \\in \\mathbb{Z}$, with the $y$-axis as a vertical asymptote when $n < 0$; cubic models $f(x) = ax^3 + bx^2 + cx + d$; sinusoidal models $f(x) = a \\sin(bx) + d$ and $f(x) = a \\cos(bx) + d$."
+  },
+  {
+    "id": "AI_SL_2-6",
+    "section": "AI SL 2.6",
+    "topic": "AI SL Functions",
+    "text": "Modelling skills: using the modelling process to create, fit and use the theoretical models in SL 2.5 and their graphs; developing and fitting models by recognizing and choosing appropriate models and parameters from a context; determining a reasonable domain and finding parameters of a model; testing and reflecting on the model by commenting on appropriateness and reasonableness; justifying the choice of a particular model based on the shape of the data, properties of the curve and the context; using the model for reading, interpreting and making predictions."
+  },
+  {
+    "id": "AI_HL_2-7",
+    "section": "AI HL 2.7",
+    "topic": "AI HL Functions",
+    "text": "Composite functions in context; notation $(f \\circ g)(x) = f(g(x))$; inverse function $f^{-1}$, including domain restriction; finding an inverse function."
+  },
+  {
+    "id": "AI_HL_2-8",
+    "section": "AI HL 2.8",
+    "topic": "AI HL Functions",
+    "text": "Transformations of graphs: translations $y = f(x) + b$ and $y = f(x - a)$; reflections in the $x$-axis $y = -f(x)$ and in the $y$-axis $y = f(-x)$; vertical stretch with scale factor $p$ given by $y = p f(x)$; horizontal stretch with scale factor $1/q$ given by $y = f(qx)$; composite transformations."
+  },
+  {
+    "id": "AI_HL_2-9",
+    "section": "AI HL 2.9",
+    "topic": "AI HL Functions",
+    "text": "Modelling with additional functions beyond the SL content: exponential models to calculate half-life; natural logarithmic models $f(x) = a + b \\ln x$; sinusoidal models $f(x) = a \\sin(bx - c) + d$; logistic models $f(x) = \\dfrac{L}{1 + C e^{-kx}}$ with $L, C, k > 0$; piecewise models."
+  },
+  {
+    "id": "AI_HL_2-10",
+    "section": "AI HL 2.10",
+    "topic": "AI HL Functions",
+    "text": "Scaling very large or very small numbers using logarithms; linearizing data using logarithms to determine whether the data has an exponential or power relationship by using best-fit straight lines to determine parameters; interpretation of log–log and semi-log graphs."
+  },
+  {
+    "id": "AI_SL_3-1",
+    "section": "AI SL 3.1",
+    "topic": "AI SL Geometry and Trigonometry",
+    "text": "Distance between two points in three-dimensional space and their midpoint; volume and surface area of three-dimensional solids including right pyramid, right cone, sphere, hemisphere and combinations of these solids; size of an angle between two intersecting lines or between a line and a plane."
+  },
+  {
+    "id": "AI_SL_3-2",
+    "section": "AI SL 3.2",
+    "topic": "AI SL Geometry and Trigonometry",
+    "text": "Use of sine, cosine and tangent ratios to find sides and angles of right-angled triangles; the sine rule $\\dfrac{a}{\\sin A} = \\dfrac{b}{\\sin B} = \\dfrac{c}{\\sin C}$; the cosine rule $c^2 = a^2 + b^2 - 2ab \\cos C$ and $\\cos C = \\dfrac{a^2 + b^2 - c^2}{2ab}$; area of a triangle $\\tfrac{1}{2} ab \\sin C$."
+  },
+  {
+    "id": "AI_SL_3-3",
+    "section": "AI SL 3.3",
+    "topic": "AI SL Geometry and Trigonometry",
+    "text": "Applications of right and non-right angled trigonometry, including Pythagoras' theorem; angles of elevation and depression; construction of labelled diagrams from written statements."
+  },
+  {
+    "id": "AI_SL_3-4",
+    "section": "AI SL 3.4",
+    "topic": "AI SL Geometry and Trigonometry",
+    "text": "The circle: length of an arc and area of a sector."
+  },
+  {
+    "id": "AI_SL_3-5",
+    "section": "AI SL 3.5",
+    "topic": "AI SL Geometry and Trigonometry",
+    "text": "Equations of perpendicular bisectors."
+  },
+  {
+    "id": "AI_SL_3-6",
+    "section": "AI SL 3.6",
+    "topic": "AI SL Geometry and Trigonometry",
+    "text": "Voronoi diagrams: sites, vertices, edges and cells; addition of a site to an existing Voronoi diagram; nearest neighbour interpolation; applications of the \"toxic waste dump\" problem."
+  },
+  {
+    "id": "AI_HL_3-7",
+    "section": "AI HL 3.7",
+    "topic": "AI HL Geometry and Trigonometry",
+    "text": "Definition of a radian and conversion between degrees and radians; using radians to calculate area of a sector and length of an arc."
+  },
+  {
+    "id": "AI_HL_3-8",
+    "section": "AI HL 3.8",
+    "topic": "AI HL Geometry and Trigonometry",
+    "text": "Definitions of $\\cos \\theta$ and $\\sin \\theta$ in terms of the unit circle; Pythagorean identity $\\cos^2 \\theta + \\sin^2 \\theta = 1$; definition of $\\tan \\theta$ as $\\sin \\theta/\\cos \\theta$; extension of the sine rule to the ambiguous case; graphical methods of solving trigonometric equations in a finite interval."
+  },
+  {
+    "id": "AI_HL_3-9",
+    "section": "AI HL 3.9",
+    "topic": "AI HL Geometry and Trigonometry",
+    "text": "Geometric transformations of points in two dimensions using matrices, including reflections, horizontal and vertical stretches, enlargements, translations and rotations; compositions of these transformations; geometric interpretation of the determinant of a transformation matrix."
+  },
+  {
+    "id": "AI_HL_3-10",
+    "section": "AI HL 3.10",
+    "topic": "AI HL Geometry and Trigonometry",
+    "text": "Concept of a vector and a scalar; representation of vectors using directed line segments; unit vectors and base vectors $\\mathbf{i}, \\mathbf{j}, \\mathbf{k}$; components of a vector and column representation $\\mathbf{v} = [v_1, v_2, v_3]^T = v_1 \\mathbf{i} + v_2 \\mathbf{j} + v_3 \\mathbf{k}$; zero vector $\\mathbf{0}$ and vector $-\\mathbf{v}$; rescaling and normalizing vectors."
+  },
+  {
+    "id": "AI_HL_3-11",
+    "section": "AI HL 3.11",
+    "topic": "AI HL Geometry and Trigonometry",
+    "text": "Vector equation of a line in two and three dimensions: $\\mathbf{r} = \\mathbf{a} + \\lambda \\mathbf{b}$, where $\\mathbf{b}$ is a direction vector of the line."
+  },
+  {
+    "id": "AI_HL_3-12",
+    "section": "AI HL 3.12",
+    "topic": "AI HL Geometry and Trigonometry",
+    "text": "Vector applications to kinematics, including modelling linear motion with constant velocity in two and three dimensions and motion with variable velocity in two dimensions."
+  },
+  {
+    "id": "AI_HL_3-13",
+    "section": "AI HL 3.13",
+    "topic": "AI HL Geometry and Trigonometry",
+    "text": "Definition and calculation of the scalar product of two vectors; angle between two vectors and the acute angle between two lines; definition and calculation of the vector product of two vectors; geometric interpretation of $\\lvert \\mathbf{v} \\times \\mathbf{w} \\rvert$; components of vectors."
+  },
+  {
+    "id": "AI_HL_3-14",
+    "section": "AI HL 3.14",
+    "topic": "AI HL Geometry and Trigonometry",
+    "text": "Graph theory: graphs, vertices and edges; adjacent vertices and adjacent edges; degree of a vertex; simple graphs, complete graphs and weighted graphs; directed graphs and in-degree and out-degree of a directed graph; subgraphs and trees."
+  },
+  {
+    "id": "AI_HL_3-15",
+    "section": "AI HL 3.15",
+    "topic": "AI HL Geometry and Trigonometry",
+    "text": "Adjacency matrices and walks; number of $k$-length walks (or less than $k$-length walks) between two vertices; weighted adjacency tables; construction of the transition matrix for a strongly connected undirected or directed graph."
+  },
+  {
+    "id": "AI_HL_3-16",
+    "section": "AI HL 3.16",
+    "topic": "AI HL Geometry and Trigonometry",
+    "text": "Tree and cycle algorithms with undirected graphs; walks, trails, paths, circuits and cycles; Eulerian trails and circuits; Hamiltonian paths and cycles; minimum spanning tree algorithms (Kruskal's and Prim's) for finding minimum spanning trees; Chinese postman problem and algorithm for determining the shortest route around a weighted graph with up to four odd vertices, traversing each edge at least once; travelling salesman problem to determine the Hamiltonian cycle of least weight in a weighted complete graph; nearest neighbour algorithm for an upper bound for the travelling salesman problem; deleted vertex algorithm for a lower bound for the travelling salesman problem."
+  },
+  {
+    "id": "AI_SL_4-1",
+    "section": "AI SL 4.1",
+    "topic": "AI SL Statistics and Probability",
+    "text": "Concepts of population, sample, random sample, discrete and continuous data; reliability of data sources and bias in sampling; interpretation of outliers; sampling techniques and their effectiveness."
+  },
+  {
+    "id": "AI_SL_4-2",
+    "section": "AI SL 4.2",
+    "topic": "AI SL Statistics and Probability",
+    "text": "Presentation of data (discrete and continuous) using frequency distributions (tables), histograms and cumulative frequency; cumulative frequency graphs and their use to find median, quartiles, percentiles, range and interquartile range (IQR); production and understanding of box and whisker diagrams."
+  },
+  {
+    "id": "AI_SL_4-3",
+    "section": "AI SL 4.3",
+    "topic": "AI SL Statistics and Probability",
+    "text": "Measures of central tendency (mean, median and mode) and estimation of the mean from grouped data; modal class; measures of dispersion including interquartile range, standard deviation and variance; effect of constant changes on the original data; quartiles of discrete data."
+  },
+  {
+    "id": "AI_SL_4-4",
+    "section": "AI SL 4.4",
+    "topic": "AI SL Statistics and Probability",
+    "text": "Linear correlation of bivariate data; Pearson's product–moment correlation coefficient $r$; scatter diagrams and lines of best fit by eye passing through the mean point; equation of the regression line of $y$ on $x$; use of the regression line for prediction; interpretation of the parameters $a$ and $b$ in a linear regression $y = ax + b$."
+  },
+  {
+    "id": "AI_SL_4-5",
+    "section": "AI SL 4.5",
+    "topic": "AI SL Statistics and Probability",
+    "text": "Concepts of trial, outcome, equally likely outcomes, relative frequency, sample space $U$ and event; probability of an event $A$ given by $P(A) = \\dfrac{n(A)}{n(U)}$; complementary events $A$ and $A'$ (not $A$); expected number of occurrences."
+  },
+  {
+    "id": "AI_SL_4-6",
+    "section": "AI SL 4.6",
+    "topic": "AI SL Statistics and Probability",
+    "text": "Use of Venn diagrams, tree diagrams, sample space diagrams and tables of outcomes to calculate probabilities; combined events with $P(A \\cup B) = P(A) + P(B) - P(A \\cap B)$; mutually exclusive events with $P(A \\cap B) = 0$; conditional probability $P(A \\mid B) = \\dfrac{P(A \\cap B)}{P(B)}$; independent events with $P(A \\cap B) = P(A)P(B)$."
+  },
+  {
+    "id": "AI_SL_4-7",
+    "section": "AI SL 4.7",
+    "topic": "AI SL Statistics and Probability",
+    "text": "Concept of discrete random variables and their probability distributions; expected value (mean) $E(X)$ for discrete data and its applications."
+  },
+  {
+    "id": "AI_SL_4-8",
+    "section": "AI SL 4.8",
+    "topic": "AI SL Statistics and Probability",
+    "text": "Binomial distribution and its mean and variance."
+  },
+  {
+    "id": "AI_SL_4-9",
+    "section": "AI SL 4.9",
+    "topic": "AI SL Statistics and Probability",
+    "text": "Normal distribution and curve; properties of the normal distribution; diagrammatic representation; normal probability calculations; inverse normal calculations."
+  },
+  {
+    "id": "AI_SL_4-10",
+    "section": "AI SL 4.10",
+    "topic": "AI SL Statistics and Probability",
+    "text": "Spearman's rank correlation coefficient $r_s$; awareness of the appropriateness and limitations of Pearson's product–moment correlation coefficient and Spearman's rank correlation coefficient, and the effect of outliers on each."
+  },
+  {
+    "id": "AI_SL_4-11",
+    "section": "AI SL 4.11",
+    "topic": "AI SL Statistics and Probability",
+    "text": "Formulation of null and alternative hypotheses $H_0$ and $H_1$; significance levels; $p$-values; expected and observed frequencies; $\\chi^2$ test for independence using contingency tables, degrees of freedom and critical values; $\\chi^2$ goodness-of-fit test; $t$-test; use of $p$-values to compare the means of two populations; one-tailed and two-tailed tests."
+  },
+  {
+    "id": "AI_HL_4-12",
+    "section": "AI HL 4.12",
+    "topic": "AI HL Statistics and Probability",
+    "text": "Design of valid data collection methods such as surveys and questionnaires; selecting relevant variables from many variables; choosing relevant and appropriate data to analyse; categorizing numerical data in a $\\chi^2$ table and justifying the choice of categorisation; choosing an appropriate number of degrees of freedom when estimating parameters from data in a $\\chi^2$ goodness-of-fit test; definition of reliability and validity and associated reliability and validity tests."
+  },
+  {
+    "id": "AI_HL_4-13",
+    "section": "AI HL 4.13",
+    "topic": "AI HL Statistics and Probability",
+    "text": "Non-linear regression and evaluation of least squares regression curves using technology; coefficient of determination $R^2$ and its evaluation using technology."
+  },
+  {
+    "id": "AI_HL_4-14",
+    "section": "AI HL 4.14",
+    "topic": "AI HL Statistics and Probability",
+    "text": "Linear transformation of a single random variable; expected value of linear combinations of $n$ random variables; variance of linear combinations of $n$ independent random variables; sample mean $\\bar{x}$ as an unbiased estimate of $\\mu$."
+  },
+  {
+    "id": "AI_HL_4-15",
+    "section": "AI HL 4.15",
+    "topic": "AI HL Statistics and Probability",
+    "text": "A linear combination of $n$ independent normal random variables is normally distributed; in particular, if $X \\sim N(\\mu, \\sigma^2)$, then $\\bar{X} \\sim N(\\mu, \\sigma^2/n)$; central limit theorem."
+  },
+  {
+    "id": "AI_HL_4-16",
+    "section": "AI HL 4.16",
+    "topic": "AI HL Statistics and Probability",
+    "text": "Confidence intervals for the mean of a normal population."
+  },
+  {
+    "id": "AI_HL_4-17",
+    "section": "AI HL 4.17",
+    "topic": "AI HL Statistics and Probability",
+    "text": "Poisson distribution and its mean and variance; sum of two independent Poisson distributions and its Poisson distribution."
+  },
+  {
+    "id": "AI_HL_4-18",
+    "section": "AI HL 4.18",
+    "topic": "AI HL Statistics and Probability",
+    "text": "Critical values and critical regions; tests for population mean for a normal distribution; tests for proportion using the binomial distribution; tests for population mean using the Poisson distribution; use of technology to test the hypothesis that the population product–moment correlation coefficient $\\rho$ is 0 for bivariate normal distributions; type I and type II errors including calculations of their probabilities."
+  },
+  {
+    "id": "AI_HL_4-19",
+    "section": "AI HL 4.19",
+    "topic": "AI HL Statistics and Probability",
+    "text": "Transition matrices and their powers; regular Markov chains; initial state probability matrices; calculation of steady-state and long-term probabilities by repeated multiplication of the transition matrix or by solving a system of linear equations."
+  },
+  {
+    "id": "AI_SL_5-1",
+    "section": "AI SL 5.1",
+    "topic": "AI SL Calculus",
+    "text": "Introduction to the concept of a limit; derivative interpreted as gradient function and as rate of change."
+  },
+  {
+    "id": "AI_SL_5-2",
+    "section": "AI SL 5.2",
+    "topic": "AI SL Calculus",
+    "text": "Increasing and decreasing functions; graphical interpretation of $f'(x) > 0$, $f'(x) = 0$, $f'(x) < 0$."
+  },
+  {
+    "id": "AI_SL_5-3",
+    "section": "AI SL 5.3",
+    "topic": "AI SL Calculus",
+    "text": "Derivative of $f(x) = ax^n$ is $f'(x) = anx^{n-1}$ for $n \\in \\mathbb{Z}$; derivative of functions of the form $f(x) = ax^n + bx^{n-1} + \\dots$ where all exponents are integers."
+  },
+  {
+    "id": "AI_SL_5-4",
+    "section": "AI SL 5.4",
+    "topic": "AI SL Calculus",
+    "text": "Tangents and normals at a given point and their equations."
+  },
+  {
+    "id": "AI_SL_5-5",
+    "section": "AI SL 5.5",
+    "topic": "AI SL Calculus",
+    "text": "Introduction to integration as anti-differentiation of functions of the form $f(x) = ax^n + bx^{n-1} + \\dots$ where $n \\in \\mathbb{Z}$ and $n \\ne -1$; anti-differentiation with a boundary condition to determine the constant term; definite integrals using technology; area of a region enclosed by a curve $y = f(x)$ and the $x$-axis, where $f(x) > 0$."
+  },
+  {
+    "id": "AI_SL_5-6",
+    "section": "AI SL 5.6",
+    "topic": "AI SL Calculus",
+    "text": "Values of $x$ where the gradient of a curve is zero; solution of $f'(x) = 0$; local maximum and minimum points."
+  },
+  {
+    "id": "AI_SL_5-7",
+    "section": "AI SL 5.7",
+    "topic": "AI SL Calculus",
+    "text": "Optimisation problems in context."
+  },
+  {
+    "id": "AI_SL_5-8",
+    "section": "AI SL 5.8",
+    "topic": "AI SL Calculus",
+    "text": "Approximating areas using the trapezoidal rule."
+  },
+  {
+    "id": "AI_HL_5-9",
+    "section": "AI HL 5.9",
+    "topic": "AI HL Calculus",
+    "text": "Derivatives of $\\sin x$, $\\cos x$, $\\tan x$, $e^x$, $\\ln x$ and $x^n$ where $n \\in \\mathbb{Q}$; chain rule, product rule and quotient rule; related rates of change."
+  },
+  {
+    "id": "AI_HL_5-10",
+    "section": "AI HL 5.10",
+    "topic": "AI HL Calculus",
+    "text": "Second derivative and the use of the second derivative test to distinguish between a maximum and a minimum point."
+  },
+  {
+    "id": "AI_HL_5-11",
+    "section": "AI HL 5.11",
+    "topic": "AI HL Calculus",
+    "text": "Definite and indefinite integration of $x^n$ where $n \\in \\mathbb{Q}$ (including $n = -1$), $\\sin x$, $\\cos x$, $1/\\cos^2 x$ and $e^x$; integration by inspection or substitution of an appropriate form."
+  },
+  {
+    "id": "AI_HL_5-12",
+    "section": "AI HL 5.12",
+    "topic": "AI HL Calculus",
+    "text": "Area of the region enclosed by a curve and the $x$- or $y$-axis in a given interval; volumes of revolution about the $x$-axis or $y$-axis."
+  },
+  {
+    "id": "AI_HL_5-13",
+    "section": "AI HL 5.13",
+    "topic": "AI HL Calculus",
+    "text": "Kinematic problems involving displacement $s$, velocity $v$ and acceleration $a$."
+  },
+  {
+    "id": "AI_HL_5-14",
+    "section": "AI HL 5.14",
+    "topic": "AI HL Calculus",
+    "text": "Setting up a model or differential equation from a context and solving by separation of variables."
+  },
+  {
+    "id": "AI_HL_5-15",
+    "section": "AI HL 5.15",
+    "topic": "AI HL Calculus",
+    "text": "Slope fields and their diagrams."
+  },
+  {
+    "id": "AI_HL_5-16",
+    "section": "AI HL 5.16",
+    "topic": "AI HL Calculus",
+    "text": "Euler's method for finding an approximate solution to first-order differential equations; numerical solution of $\\dfrac{dy}{dx} = f(x, y)$; numerical solution of the coupled system $\\dfrac{dx}{dt} = f_1(x, y, t)$ and $\\dfrac{dy}{dt} = f_2(x, y, t)$."
+  },
+  {
+    "id": "AI_HL_5-17",
+    "section": "AI HL 5.17",
+    "topic": "AI HL Calculus",
+    "text": "Phase portraits for the solutions of coupled differential equations of the form $\\dfrac{dx}{dt} = ax + by$, $\\dfrac{dy}{dt} = cx + dy$; qualitative analysis of future paths for distinct, real, complex and imaginary eigenvalues; sketching trajectories and using phase portraits to identify key features such as equilibrium points, stable populations and saddle points."
+  },
+  {
+    "id": "AI_HL_5-18",
+    "section": "AI HL 5.18",
+    "topic": "AI HL Calculus",
+    "text": "Solutions of $\\dfrac{d^2 x}{dt^2} = f(x, \\dfrac{dx}{dt}, t)$ by Euler's method."
+  }
+
+];
