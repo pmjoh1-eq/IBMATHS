@@ -3,7 +3,9 @@
   "label": "Year 11 AA SL",
   "programme": "AA",
   "level": "SL",
-  "years": [2026],
+  "years": [
+    2026
+  ],
   "terms": [
     {
       "term_id": "T1",
@@ -16,8 +18,12 @@
             {
               "lesson_id": "L1",
               "title": "Scientific Notation",
-              "syllabus_ids": ["AA_SL_1-1"],
-              "textbook_ids": ["tb-23"],
+              "syllabus_ids": [
+                "AA_SL_1-1"
+              ],
+              "textbook_ids": [
+                "tb-23"
+              ],
               "homework": "Core SL Ch 3 Ex 3A Q1–10",
               "notes_latex": "Recall that $a \\times 10^k$ represents scientific notation."
             }
@@ -25,14 +31,72 @@
         }
       ]
     },
-
-    { "term_id": "T2", "label": "Term 2", "weeks": [] },
-    { "term_id": "T3", "label": "Term 3", "weeks": [] },
-    { "term_id": "T4", "label": "Term 4", "weeks": [] },
-    { "term_id": "T5", "label": "Term 5", "weeks": [] },
-    { "term_id": "T6", "label": "Term 6", "weeks": [] },
-    { "term_id": "T7", "label": "Term 7", "weeks": [] },
-    { "term_id": "T8", "label": "Term 8", "weeks": [] }
+    {
+      "term_id": "T2",
+      "label": "Term 2",
+      "weeks": [
+        {
+          "week_id": "T2-W1",
+          "label": "Week 1",
+          "lessons": []
+        },
+        {
+          "week_id": "T2-W2",
+          "label": "Week 2",
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Test",
+              "syllabus_ids": [
+                "AA_SL_3-1"
+              ],
+              "textbook_ids": [
+                "tb-78"
+              ],
+              "homework": "",
+              "notes_latex": "$x^2$"
+            },
+            {
+              "lesson_id": "L2",
+              "title": "New Lesson 2",
+              "syllabus_ids": [],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "term_id": "T3",
+      "label": "Term 3",
+      "weeks": []
+    },
+    {
+      "term_id": "T4",
+      "label": "Term 4",
+      "weeks": []
+    },
+    {
+      "term_id": "T5",
+      "label": "Term 5",
+      "weeks": []
+    },
+    {
+      "term_id": "T6",
+      "label": "Term 6",
+      "weeks": []
+    },
+    {
+      "term_id": "T7",
+      "label": "Term 7",
+      "weeks": []
+    },
+    {
+      "term_id": "T8",
+      "label": "Term 8",
+      "weeks": []
+    }
   ]
 }
-
