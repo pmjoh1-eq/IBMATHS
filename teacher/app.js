@@ -592,6 +592,9 @@ function downloadCurrentPlan() {
 async function commitCurrentPlanToGitHub() {
   if (!plan) return;
 
+  // Helpful sanity check: if this is null, your click handler can’t work
+  if (!commitBtn) throw new Error("Could not find #commitBtn in the DOM.");
+
   const owner = (ghOwnerEl.value || "").trim();
   const repo = (ghRepoEl.value || "").trim();
   const branch = (ghBranchEl.value || "main").trim();
@@ -604,22 +607,58 @@ async function commitCurrentPlanToGitHub() {
   const classId = plan.class_id || classSelect.value;
   const path = `data/plans/${classId}.json`;
 
-  setStatus(`Fetching current SHA for ${path}…`);
+  // IMPORTANT: do NOT encode slashes for the GitHub contents API path
+  const getUrl = ghContentsUrl(owner, repo, path, branch);
+  const putUrl = ghContentsUrl(owner, repo, path); // PUT uses no ref query
 
-  const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`;
-  const existing = await ghRequest(getUrl, token);
+  // Encode JSON to base64 safely (handles unicode)
+  const jsonStr = JSON.stringify(plan, null, 2);
+  const content = btoa(unescape(encodeURIComponent(jsonStr)));
 
-  const sha = existing.sha;
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(plan, null, 2))));
+  // 1) Try to fetch SHA (if file exists)
+  setStatus(`Preparing commit for ${path}…`);
 
+  let sha = null;
+  try {
+    setStatus(`Fetching current SHA for ${path}…`);
+    const existing = await ghRequest(getUrl, token);
+    sha = existing?.sha || null;
+  } catch (err) {
+    // If it's 404, the file doesn't exist yet — that's OK, we will create it
+    const msg = String(err?.message || err);
+    const is404 = msg.includes("GitHub API error (404)");
+    if (!is404) throw err;
+    sha = null;
+  }
+
+  // 2) PUT commit (create or update)
   setStatus(`Committing update to ${path} on ${branch}…`);
 
-  const putUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
-  const body = { message: `Update plan: ${classId}`, content, sha, branch };
+  const body = {
+    message: `Update plan: ${classId}`,
+    content,
+    branch,
+    ...(sha ? { sha } : {}) // only include sha if updating
+  };
 
   const res = await ghRequest(putUrl, token, "PUT", body);
-  setStatus(`Committed successfully.\n${res?.commit?.sha ? "Commit: " + res.commit.sha : ""}`, "ok");
+
+  setStatus(
+    `Committed successfully.${res?.commit?.sha ? "\nCommit: " + res.commit.sha : ""}`,
+    "ok"
+  );
+  setTimeout(clearStatus, 2000);
 }
+
+// Helper for GitHub Contents API URLs
+function ghContentsUrl(owner, repo, path, branch) {
+  // Preserve slashes in the path; encodeURI is safe here
+  const safePath = encodeURI(path).replace(/^\/+/, "");
+  let url = `https://api.github.com/repos/${owner}/${repo}/contents/${safePath}`;
+  if (branch) url += `?ref=${encodeURIComponent(branch)}`;
+  return url;
+}
+
 
 async function ghRequest(url, token, method="GET", body=null) {
   const res = await fetch(url, {
