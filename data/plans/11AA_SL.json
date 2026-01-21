@@ -62,8 +62,12 @@
             {
               "lesson_id": "L2",
               "title": "New Lesson 2",
-              "syllabus_ids": [],
-              "textbook_ids": [],
+              "syllabus_ids": [
+                "AA_SL_1-2"
+              ],
+              "textbook_ids": [
+                "tb-39"
+              ],
               "homework": "",
               "notes_latex": ""
             }
