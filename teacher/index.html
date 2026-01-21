@@ -30,32 +30,7 @@
   <main class="container">
     <div id="status" class="status" hidden></div>
 
-    <section class="card">
-      <h2>GitHub Settings (stored locally in this browser)</h2>
-      <div class="grid">
-        <div>
-          <label class="fieldLabel">Repo owner</label>
-          <input id="ghOwner" class="input" placeholder="e.g. patrickjohnson" />
-        </div>
-        <div>
-          <label class="fieldLabel">Repo name</label>
-          <input id="ghRepo" class="input" placeholder="e.g. year-planner" />
-        </div>
-        <div>
-          <label class="fieldLabel">Branch</label>
-          <input id="ghBranch" class="input" placeholder="main" />
-        </div>
-        <div>
-          <label class="fieldLabel">Token (fine-grained PAT)</label>
-          <input id="ghToken" class="input" placeholder="github_pat_…" type="password" />
-        </div>
-      </div>
-      <p class="hint">
-        Token needs <strong>Contents: Read/Write</strong> access for this repo.
-        Stored in <code>localStorage</code> on this device only.
-      </p>
-      <button id="saveGhBtn" class="btn">Save GitHub Settings</button>
-    </section>
+
 
     <section class="layout">
       <aside class="sidebar card">
@@ -132,6 +107,32 @@
           </div>
         </div>
       </section>
+    </section>
+        <section class="card">
+      <h2>GitHub Settings (stored locally in this browser)</h2>
+      <div class="grid">
+        <div>
+          <label class="fieldLabel">Repo owner</label>
+          <input id="ghOwner" class="input" placeholder="e.g. patrickjohnson" />
+        </div>
+        <div>
+          <label class="fieldLabel">Repo name</label>
+          <input id="ghRepo" class="input" placeholder="e.g. year-planner" />
+        </div>
+        <div>
+          <label class="fieldLabel">Branch</label>
+          <input id="ghBranch" class="input" placeholder="main" />
+        </div>
+        <div>
+          <label class="fieldLabel">Token (fine-grained PAT)</label>
+          <input id="ghToken" class="input" placeholder="github_pat_…" type="password" />
+        </div>
+      </div>
+      <p class="hint">
+        Token needs <strong>Contents: Read/Write</strong> access for this repo.
+        Stored in <code>localStorage</code> on this device only.
+      </p>
+      <button id="saveGhBtn" class="btn">Save GitHub Settings</button>
     </section>
   </main>
 
