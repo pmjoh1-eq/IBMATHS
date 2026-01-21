@@ -1,83 +1,140 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>IB Course Planner — Teacher</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Planner Editor (Teacher)</title>
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- MathJax (optional, for previewing lesson notes LaTeX) -->
   <script>
-    window.MathJax = {
-      tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] },
-      svg: { fontCache: "global" }
-    };
+    window.MathJax = { tex: { inlineMath: [['$', '$']] }, svg: { fontCache: 'global' } };
   </script>
-  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 </head>
 
 <body>
   <header class="topbar">
-    <div class="topbarInner">
-      <div>
-        <div class="brandTitle">IB Course Planner</div>
-        <div class="brandSub">Teacher editor</div>
-      </div>
+    <div class="brand">
+      <div class="title">Planner Editor (Teacher)</div>
+      <div class="subtitle">Edit plans • Attach syllabus + textbooks • Commit to GitHub</div>
+    </div>
 
-      <div class="topbarRight">
-        <div class="field">
-          <div class="fieldLabel">Class</div>
-          <select id="classSelect"></select>
-        </div>
-        <button class="btn" id="loadBtn">Reload</button>
-        <button class="btn primary" id="saveBtn">Save to GitHub</button>
-      </div>
+    <div class="controls">
+      <label class="label" for="classSelect">Class</label>
+      <select id="classSelect" class="select"></select>
+
+      <button id="downloadBtn" class="btn">Download JSON</button>
+      <button id="commitBtn" class="btn primary">Commit to GitHub</button>
     </div>
   </header>
 
-  <main class="layout">
+  <main class="container">
     <div id="status" class="status" hidden></div>
 
-    <aside class="sidebar">
-      <div class="panelTitle">Planner</div>
-      <div id="tree" class="tree"></div>
-      <div class="hint">
-        Tip: expand terms/weeks (+) then select a lesson to edit.
-      </div>
-    </aside>
-
-    <section class="content">
-      <div class="contentGrid">
-        <div class="panel">
-          <div class="panelTitle">Lesson</div>
-          <div id="lessonEditor" class="lessonEditor">
-            <div class="muted">Select a lesson to edit.</div>
-          </div>
+    <section class="card">
+      <h2>GitHub Settings (stored locally in this browser)</h2>
+      <div class="grid">
+        <div>
+          <label class="fieldLabel">Repo owner</label>
+          <input id="ghOwner" class="input" placeholder="e.g. patrickjohnson" />
         </div>
-
-        <div class="panel">
-          <div class="panelTitle">Coverage</div>
-          <div id="coverageView" class="coverageView">
-            <div class="muted">Loading…</div>
-          </div>
+        <div>
+          <label class="fieldLabel">Repo name</label>
+          <input id="ghRepo" class="input" placeholder="e.g. year-planner" />
         </div>
-
-        <!-- ✅ Settings moved to bottom and token-only -->
-        <div class="panel">
-          <div class="panelTitle">GitHub Token</div>
-          <div class="tokenRow">
-            <input id="ghToken" type="password" placeholder="Paste fine-grained token (repo contents: read/write)" />
-            <button id="saveTokenBtn" class="btn">Save token</button>
-            <button id="clearTokenBtn" class="btn danger">Clear</button>
-          </div>
-          <div class="hint">
-            Token is saved to <code>localStorage</code> on this device only.
-          </div>
+        <div>
+          <label class="fieldLabel">Branch</label>
+          <input id="ghBranch" class="input" placeholder="main" />
+        </div>
+        <div>
+          <label class="fieldLabel">Token (fine-grained PAT)</label>
+          <input id="ghToken" class="input" placeholder="github_pat_…" type="password" />
         </div>
       </div>
+      <p class="hint">
+        Token needs <strong>Contents: Read/Write</strong> access for this repo.
+        Stored in <code>localStorage</code> on this device only.
+      </p>
+      <button id="saveGhBtn" class="btn">Save GitHub Settings</button>
+    </section>
+
+    <section class="layout">
+      <aside class="sidebar card">
+        <h2>Structure</h2>
+        <div id="tree"></div>
+
+        <div class="miniCard">
+          <h3>Selected Week Settings</h3>
+          <label class="fieldLabel">Week start date (YYYY-MM-DD)</label>
+          <input id="weekStartDate" class="input" placeholder="2026-01-27" />
+          <button id="applyWeekBtn" class="btn full primary">Apply Week Date</button>
+          <div class="hint">Student view uses this for “Open This Week”.</div>
+        </div>
+
+        <button id="addWeekBtn" class="btn full">+ Add Week to Selected Term</button>
+        <button id="addLessonBtn" class="btn full">+ Add Lesson to Selected Week</button>
+      </aside>
+
+      <section class="editor card">
+        <h2>Lesson Editor</h2>
+        <div id="editorEmpty" class="info">Select a lesson to edit.</div>
+
+        <div id="editorForm" class="hidden">
+          <div class="row">
+            <div class="col">
+              <label class="fieldLabel">Lesson title</label>
+              <input id="lessonTitle" class="input" />
+            </div>
+            <div class="col actions">
+              <button id="moveUpBtn" class="btn">↑ Move Up</button>
+              <button id="moveDownBtn" class="btn">↓ Move Down</button>
+              <button id="deleteLessonBtn" class="btn danger">Delete</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label class="fieldLabel">Homework</label>
+              <input id="lessonHomework" class="input" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label class="fieldLabel">Notes (LaTeX allowed)</label>
+              <textarea id="lessonNotes" class="textarea" rows="5"></textarea>
+              <button id="previewMathBtn" class="btn small">Preview Math</button>
+              <div id="notesPreview" class="preview"></div>
+            </div>
+          </div>
+
+          <hr class="sep"/>
+
+          <div class="row">
+            <div class="col">
+              <h3>Syllabus objectives</h3>
+              <input id="syllabusSearch" class="input" placeholder="Search syllabus..." />
+              <div id="syllabusResults" class="results"></div>
+              <h4>Selected</h4>
+              <div id="syllabusSelected" class="chips"></div>
+            </div>
+
+            <div class="col">
+              <h3>Textbook references</h3>
+              <input id="textbookSearch" class="input" placeholder="Search textbooks..." />
+              <div id="textbookResults" class="results"></div>
+              <h4>Selected</h4>
+              <div id="textbookSelected" class="chips"></div>
+            </div>
+          </div>
+
+          <div class="row">
+            <button id="applyLessonBtn" class="btn primary">Apply Changes to Plan</button>
+          </div>
+        </div>
+      </section>
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <script defer src="app.js"></script>
 </body>
 </html>
