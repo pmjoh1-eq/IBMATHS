@@ -1,53 +1,84 @@
-document.addEventListener("DOMContentLoaded", () => {
-  init().catch(showError);
-});
+// Teacher Editor: default-collapsed tree + topic/textbook filter buttons
 
-function $(id) { return document.getElementById(id); }
+const treeEl = document.getElementById("tree");
+const statusEl = document.getElementById("status");
 
-/* ==============================
-   ✅ Hard-coded GitHub settings
-   ============================== */
-const GH_OWNER  = "pmjoh1-eq";
-const GH_REPO   = "IBMATHS";
-const GH_BRANCH = "main";
+const classSelect = document.getElementById("classSelect");
+const downloadBtn = document.getElementById("downloadBtn");
+const commitBtn = document.getElementById("commitBtn");
 
-/* Where plans live in your repo */
-const PLAN_PATH_TEMPLATE = (classId) => `data/plans/${classId}.json`;
+const addWeekBtn = document.getElementById("addWeekBtn");
+const addLessonBtn = document.getElementById("addLessonBtn");
 
-/* Classes */
+const weekStartDateEl = document.getElementById("weekStartDate");
+const applyWeekBtn = document.getElementById("applyWeekBtn");
+
+const ghOwnerEl = document.getElementById("ghOwner");
+const ghRepoEl = document.getElementById("ghRepo");
+const ghBranchEl = document.getElementById("ghBranch");
+const ghTokenEl = document.getElementById("ghToken");
+const saveGhBtn = document.getElementById("saveGhBtn");
+
+const editorEmpty = document.getElementById("editorEmpty");
+const editorForm = document.getElementById("editorForm");
+
+const lessonTitleEl = document.getElementById("lessonTitle");
+const lessonHomeworkEl = document.getElementById("lessonHomework");
+const lessonNotesEl = document.getElementById("lessonNotes");
+const previewMathBtn = document.getElementById("previewMathBtn");
+const notesPreview = document.getElementById("notesPreview");
+
+const moveUpBtn = document.getElementById("moveUpBtn");
+const moveDownBtn = document.getElementById("moveDownBtn");
+const deleteLessonBtn = document.getElementById("deleteLessonBtn");
+const applyLessonBtn = document.getElementById("applyLessonBtn");
+
+const syllabusSearch = document.getElementById("syllabusSearch");
+const syllabusResults = document.getElementById("syllabusResults");
+const syllabusSelected = document.getElementById("syllabusSelected");
+
+const textbookSearch = document.getElementById("textbookSearch");
+const textbookResults = document.getElementById("textbookResults");
+const textbookSelected = document.getElementById("textbookSelected");
+
 const CLASSES = ["12AA_SL","12AA_HL","12AI_SL","11AA_SL","11AA_HL","11AI_SL"];
 
-/* Storage keys */
-const LS_TOKEN_KEY = "planner_github_token_v1";
+// --- NEW: filter button containers (injected under search bars)
+let syllabusFilterBar = null;
+let textbookFilterBar = null;
 
-/* State */
+// Canonical IB topic buckets
+const TOPIC_BUCKETS = [
+  { key: "Number and Algebra", match: ["number", "algebra"] },
+  { key: "Functions", match: ["function"] },
+  { key: "Geometry and Trigonometry", match: ["geometry", "trigonometry"] },
+  { key: "Statistics and Probability", match: ["statistics", "probability"] },
+  { key: "Calculus", match: ["calculus"] },
+];
+
 let repoRoot = "";
-let statusEl, treeEl, classSelect, loadBtn, saveBtn, lessonEditorEl, coverageViewEl;
-let ghTokenEl, saveTokenBtn, clearTokenBtn;
-
 let syllabus = [];
 let textbooks = [];
 let plan = null;
 
 let selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
-let collapsed = { terms: {}, weeks: {} };
+
+// Default collapsed: everything starts collapsed
+let collapsed = {
+  terms: {}, // tIdx -> bool
+  weeks: {}  // `${tIdx}-${wIdx}` -> bool
+};
+
+// Active filters
+let activeSyllabusBucket = TOPIC_BUCKETS[0].key; // default first bucket
+let activeTextbookKey = null; // set after load based on available textbooks
+
+init().catch(showError);
 
 async function init() {
-  statusEl = $("status");
-  treeEl = $("tree");
-  classSelect = $("classSelect");
-  loadBtn = $("loadBtn");
-  saveBtn = $("saveBtn");
-  lessonEditorEl = $("lessonEditor");
-  coverageViewEl = $("coverageView");
-
-  ghTokenEl = $("ghToken");
-  saveTokenBtn = $("saveTokenBtn");
-  clearTokenBtn = $("clearTokenBtn");
-
   repoRoot = getRepoRoot();
+  hydrateGitHubFields();
 
-  // Class dropdown
   classSelect.innerHTML = "";
   for (const c of CLASSES) {
     const opt = document.createElement("option");
@@ -56,27 +87,6 @@ async function init() {
     classSelect.appendChild(opt);
   }
 
-  // Load token from localStorage
-  const savedToken = localStorage.getItem(LS_TOKEN_KEY) || "";
-  if (ghTokenEl) ghTokenEl.value = savedToken;
-
-  saveTokenBtn?.addEventListener("click", () => {
-    localStorage.setItem(LS_TOKEN_KEY, ghTokenEl.value.trim());
-    setStatus("Token saved locally.", "ok");
-    setTimeout(clearStatus, 1200);
-  });
-
-  clearTokenBtn?.addEventListener("click", () => {
-    localStorage.removeItem(LS_TOKEN_KEY);
-    ghTokenEl.value = "";
-    setStatus("Token cleared.", "ok");
-    setTimeout(clearStatus, 1200);
-  });
-
-  classSelect.addEventListener("change", () => loadAll().catch(showError));
-  loadBtn.addEventListener("click", () => loadAll().catch(showError));
-  saveBtn.addEventListener("click", () => saveToGitHub().catch(showError));
-
   setStatus("Loading reference data…");
   [syllabus, textbooks] = await Promise.all([
     loadJSON(new URL("data/syllabus_objectives.json", repoRoot).toString(), "syllabus_objectives.json"),
@@ -84,35 +94,71 @@ async function init() {
   ]);
   clearStatus();
 
-  await loadAll();
+  // Build filter bars
+  injectFilterBars();
+
+  // Default textbook filter = first textbook group encountered
+  const tbKeys = getTextbookKeys();
+  activeTextbookKey = tbKeys[0] || null;
+  renderTextbookFilterButtons();
+
+  classSelect.addEventListener("change", () => loadPlanAndRender().catch(showError));
+  downloadBtn.addEventListener("click", () => downloadCurrentPlan());
+  commitBtn.addEventListener("click", () => commitCurrentPlanToGitHub().catch(showError));
+
+  saveGhBtn.addEventListener("click", () => {
+    saveGitHubFields();
+    setStatus("Saved GitHub settings locally.", "ok");
+    setTimeout(clearStatus, 1200);
+  });
+
+  addWeekBtn.addEventListener("click", () => addWeekToSelectedTerm());
+  addLessonBtn.addEventListener("click", () => addLessonToSelectedWeek());
+
+  applyWeekBtn.addEventListener("click", () => applyWeekStartDate());
+
+  applyLessonBtn.addEventListener("click", () => applyLessonEdits());
+  moveUpBtn.addEventListener("click", () => moveLesson(-1));
+  moveDownBtn.addEventListener("click", () => moveLesson(1));
+  deleteLessonBtn.addEventListener("click", () => deleteLesson());
+
+  previewMathBtn.addEventListener("click", async () => {
+    notesPreview.innerHTML = escapeHtml(lessonNotesEl.value || "").replaceAll("\n","<br/>");
+    await typesetMath();
+  });
+
+  syllabusSearch.addEventListener("input", () => renderSyllabusSearch());
+  textbookSearch.addEventListener("input", () => renderTextbookSearch());
+
+  await loadPlanAndRender();
 }
 
-/* ---------- Load plan + render ---------- */
-async function loadAll() {
+async function loadPlanAndRender() {
   const classId = classSelect.value || CLASSES[0];
   classSelect.value = classId;
 
   setStatus(`Loading plan: ${classId}…`);
-  const url = new URL(PLAN_PATH_TEMPLATE(classId), repoRoot).toString();
-  plan = await loadJSON(url, `${classId}.json`);
+  plan = await loadJSON(new URL(`data/plans/${classId}.json`, repoRoot).toString(), `${classId}.json`);
   clearStatus();
 
   selected = { termIndex: 0, weekIndex: 0, lessonIndex: null };
+
+  // Reset collapse state for a new plan (default everything collapsed)
   collapsed = { terms: {}, weeks: {} };
 
   renderTree();
-  renderLessonEditor();
-  renderCoverage();
+  renderWeekEditor();
+  renderEditor();
 }
 
-/* ---------- Tree ---------- */
+// ---------- Tree (default collapsed) ----------
 function renderTree() {
   treeEl.innerHTML = "";
   if (!plan?.terms) return;
 
   plan.terms.forEach((term, tIdx) => {
     const termKey = String(tIdx);
-    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true;
+    if (collapsed.terms[termKey] === undefined) collapsed.terms[termKey] = true; // default collapsed
 
     const termBox = document.createElement("div");
     termBox.className = "treeItem";
@@ -121,23 +167,25 @@ function renderTree() {
     hdr.className = "treeHdr";
 
     const left = document.createElement("div");
-    left.className = "treeHdrLeft";
-    left.innerHTML = `
-      <div class="treeTitle">${escapeHtml(term.label || term.term_id || `Term ${tIdx + 1}`)}</div>
-      <div class="treeMeta">Term</div>
-    `;
+    left.innerHTML = `<div class="treeTitle">${escapeHtml(term.label || term.term_id || `Term ${tIdx+1}`)}</div>
+                      <div class="treeMeta">Term</div>`;
+    left.style.cursor = "pointer";
     left.onclick = () => {
-      collapsed.terms[termKey] = !collapsed.terms[termKey];
-      renderTree();
+      selected.termIndex = tIdx;
+      selected.weekIndex = 0;
+      selected.lessonIndex = null;
+
+      // Expand just this term when selected (keeps "starts collapsed" behaviour)
+      collapsed.terms[termKey] = false;
+
+      renderTree(); renderWeekEditor(); renderEditor();
     };
 
     const btn = document.createElement("button");
     btn.className = "iconBtn";
     btn.textContent = collapsed.terms[termKey] ? "+" : "−";
-    btn.onclick = () => {
-      collapsed.terms[termKey] = !collapsed.terms[termKey];
-      renderTree();
-    };
+    btn.title = collapsed.terms[termKey] ? "Expand" : "Collapse";
+    btn.onclick = () => { collapsed.terms[termKey] = !collapsed.terms[termKey]; renderTree(); };
 
     hdr.appendChild(left);
     hdr.appendChild(btn);
@@ -149,7 +197,7 @@ function renderTree() {
 
       (term.weeks || []).forEach((week, wIdx) => {
         const wkKey = `${tIdx}-${wIdx}`;
-        if (collapsed.weeks[wkKey] === undefined) collapsed.weeks[wkKey] = true;
+        if (collapsed.weeks[wkKey] === undefined) collapsed.weeks[wkKey] = true; // default collapsed
 
         const weekBox = document.createElement("div");
         weekBox.className = "treeItem";
@@ -158,24 +206,27 @@ function renderTree() {
         wh.className = "treeHdr";
 
         const wLeft = document.createElement("div");
-        wLeft.className = "treeHdrLeft";
         const dateLabel = week.start_date ? ` • starts ${escapeHtml(week.start_date)}` : "";
-        wLeft.innerHTML = `
-          <div class="treeTitle">${escapeHtml(week.label || week.week_id || `Week ${wIdx + 1}`)}</div>
-          <div class="treeMeta">Week${dateLabel}</div>
-        `;
+        wLeft.innerHTML = `<div class="treeTitle">${escapeHtml(week.label || week.week_id || `Week ${wIdx+1}`)}</div>
+                           <div class="treeMeta">Week${dateLabel}</div>`;
+        wLeft.style.cursor = "pointer";
         wLeft.onclick = () => {
-          collapsed.weeks[wkKey] = !collapsed.weeks[wkKey];
-          renderTree();
+          selected.termIndex = tIdx;
+          selected.weekIndex = wIdx;
+          selected.lessonIndex = null;
+
+          // Expand this week when selected
+          collapsed.terms[String(tIdx)] = false;
+          collapsed.weeks[wkKey] = false;
+
+          renderTree(); renderWeekEditor(); renderEditor();
         };
 
         const wBtn = document.createElement("button");
         wBtn.className = "iconBtn";
         wBtn.textContent = collapsed.weeks[wkKey] ? "+" : "−";
-        wBtn.onclick = () => {
-          collapsed.weeks[wkKey] = !collapsed.weeks[wkKey];
-          renderTree();
-        };
+        wBtn.title = collapsed.weeks[wkKey] ? "Expand" : "Collapse";
+        wBtn.onclick = () => { collapsed.weeks[wkKey] = !collapsed.weeks[wkKey]; renderTree(); };
 
         wh.appendChild(wLeft);
         wh.appendChild(wBtn);
@@ -186,16 +237,20 @@ function renderTree() {
           weekChildren.className = "treeChildren";
 
           (week.lessons || []).forEach((lesson, lIdx) => {
-            const b = document.createElement("button");
-            b.className = "lessonBtn" + (isSelected(tIdx, wIdx, lIdx) ? " active" : "");
-            b.textContent = lesson.title || `Lesson ${lIdx + 1}`;
-            b.onclick = () => {
-              selected = { termIndex: tIdx, weekIndex: wIdx, lessonIndex: lIdx };
-              renderTree();
-              renderLessonEditor();
-              renderCoverage();
+            const btnLesson = document.createElement("button");
+            btnLesson.className = "btn";
+            btnLesson.style.width = "100%";
+            btnLesson.style.textAlign = "left";
+            btnLesson.textContent = lesson.title || `Lesson ${lIdx+1}`;
+            btnLesson.onclick = () => {
+              selected.termIndex = tIdx;
+              selected.weekIndex = wIdx;
+              selected.lessonIndex = lIdx;
+              // Keep current expand state; selecting lesson shouldn't auto-expand anything else
+              renderWeekEditor();
+              renderEditor();
             };
-            weekChildren.appendChild(b);
+            weekChildren.appendChild(btnLesson);
           });
 
           weekBox.appendChild(weekChildren);
@@ -211,190 +266,388 @@ function renderTree() {
   });
 }
 
-function isSelected(t, w, l) {
-  return selected.termIndex === t && selected.weekIndex === w && selected.lessonIndex === l;
+// ---------- Week editor ----------
+function renderWeekEditor() {
+  const week = getSelectedWeek();
+  weekStartDateEl.value = week?.start_date || "";
 }
 
-/* ---------- Lesson editor ---------- */
-function renderLessonEditor() {
+function applyWeekStartDate() {
+  const week = getSelectedWeek();
+  if (!week) return;
+
+  const v = (weekStartDateEl.value || "").trim();
+  if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    setStatus("Week start date must be YYYY-MM-DD.", "error");
+    return;
+  }
+  week.start_date = v || undefined;
+
+  setStatus("Applied week date (not committed yet).", "ok");
+  setTimeout(clearStatus, 1200);
+
+  renderTree();
+}
+
+// ---------- Add week / lesson ----------
+function addWeekToSelectedTerm() {
+  const term = getSelectedTerm();
+  if (!term) return;
+
+  term.weeks = term.weeks || [];
+  const next = term.weeks.length + 1;
+
+  term.weeks.push({
+    week_id: `${term.term_id || `T${selected.termIndex+1}`}-W${next}`,
+    label: `Week ${next}`,
+    start_date: "",
+    lessons: []
+  });
+
+  selected.weekIndex = term.weeks.length - 1;
+  selected.lessonIndex = null;
+
+  // Expand selected path
+  collapsed.terms[String(selected.termIndex)] = false;
+  collapsed.weeks[`${selected.termIndex}-${selected.weekIndex}`] = false;
+
+  renderTree();
+  renderWeekEditor();
+  renderEditor();
+}
+
+function addLessonToSelectedWeek() {
+  const week = getSelectedWeek();
+  if (!week) return;
+
+  week.lessons = week.lessons || [];
+  const next = week.lessons.length + 1;
+
+  week.lessons.push({
+    lesson_id: `L${next}`,
+    title: `New Lesson ${next}`,
+    syllabus_ids: [],
+    textbook_ids: [],
+    homework: "",
+    notes_latex: ""
+  });
+
+  selected.lessonIndex = week.lessons.length - 1;
+
+  renderTree();
+  renderEditor();
+}
+
+// ---------- Editor ----------
+function renderEditor() {
   const lesson = getSelectedLesson();
   if (!lesson) {
-    lessonEditorEl.innerHTML = `<div class="muted">Select a lesson to edit.</div>`;
+    editorEmpty.classList.remove("hidden");
+    editorForm.classList.add("hidden");
     return;
   }
 
-  lessonEditorEl.innerHTML = `
-    <div class="row">
-      <label>Title</label>
-      <input id="editTitle" type="text" value="${escapeAttr(lesson.title || "")}">
-      <div class="small">Shown in the tree and lesson view.</div>
-    </div>
+  editorEmpty.classList.add("hidden");
+  editorForm.classList.remove("hidden");
 
-    <div class="row">
-      <label>Homework</label>
-      <input id="editHomework" type="text" value="${escapeAttr(lesson.homework || "")}">
-    </div>
+  lessonTitleEl.value = lesson.title || "";
+  lessonHomeworkEl.value = lesson.homework || "";
+  lessonNotesEl.value = lesson.notes_latex || "";
+  notesPreview.innerHTML = "";
 
-    <div class="row">
-      <label>Teacher Notes (LaTeX)</label>
-      <textarea id="editNotes">${escapeHtml(lesson.notes_latex || "")}</textarea>
-      <div class="small">Student view shows this as text; you can embed LaTeX for MathJax rendering.</div>
-    </div>
+  renderSelectedChips();
+  renderSyllabusSearch();
+  renderTextbookSearch();
+}
 
-    <div class="row">
-      <label>Syllabus IDs (comma-separated)</label>
-      <input id="editSyllabus" type="text" value="${escapeAttr((lesson.syllabus_ids || []).join(", "))}">
-    </div>
+function applyLessonEdits() {
+  const lesson = getSelectedLesson();
+  if (!lesson) return;
 
-    <div class="row">
-      <label>Textbook IDs (comma-separated)</label>
-      <input id="editTextbooks" type="text" value="${escapeAttr((lesson.textbook_ids || []).join(", "))}">
-    </div>
-  `;
+  lesson.title = lessonTitleEl.value || "";
+  lesson.homework = lessonHomeworkEl.value || "";
+  lesson.notes_latex = lessonNotesEl.value || "";
 
-  // Wire inputs → update plan in memory
-  $("editTitle").addEventListener("input", (e) => { lesson.title = e.target.value; renderTree(); });
-  $("editHomework").addEventListener("input", (e) => { lesson.homework = e.target.value; });
-  $("editNotes").addEventListener("input", (e) => { lesson.notes_latex = e.target.value; });
-  $("editSyllabus").addEventListener("input", (e) => {
-    lesson.syllabus_ids = splitIds(e.target.value);
-    renderCoverage();
+  setStatus("Applied lesson changes (not committed yet).", "ok");
+  setTimeout(clearStatus, 1200);
+
+  renderTree();
+}
+
+function moveLesson(delta) {
+  const week = getSelectedWeek();
+  if (!week || selected.lessonIndex === null) return;
+
+  const arr = week.lessons || [];
+  const lIdx = selected.lessonIndex;
+  const newIdx = lIdx + delta;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+
+  [arr[lIdx], arr[newIdx]] = [arr[newIdx], arr[lIdx]];
+  selected.lessonIndex = newIdx;
+
+  renderTree();
+  renderEditor();
+}
+
+function deleteLesson() {
+  const week = getSelectedWeek();
+  if (!week || selected.lessonIndex === null) return;
+
+  week.lessons.splice(selected.lessonIndex, 1);
+  selected.lessonIndex = null;
+
+  renderTree();
+  renderEditor();
+}
+
+// ---------- NEW: Filter bars ----------
+function injectFilterBars() {
+  // Syllabus filter bar
+  syllabusFilterBar = document.createElement("div");
+  syllabusFilterBar.className = "filterBar";
+  syllabusSearch.insertAdjacentElement("afterend", syllabusFilterBar);
+  renderSyllabusFilterButtons();
+
+  // Textbook filter bar
+  textbookFilterBar = document.createElement("div");
+  textbookFilterBar.className = "filterBar";
+  textbookSearch.insertAdjacentElement("afterend", textbookFilterBar);
+  renderTextbookFilterButtons();
+}
+
+function renderSyllabusFilterButtons() {
+  syllabusFilterBar.innerHTML = "";
+  for (const b of TOPIC_BUCKETS) {
+    const btn = document.createElement("button");
+    btn.className = "filterBtn" + (activeSyllabusBucket === b.key ? " active" : "");
+    btn.textContent = b.key;
+    btn.onclick = () => {
+      activeSyllabusBucket = b.key;
+      renderSyllabusFilterButtons();
+      renderSyllabusSearch();
+    };
+    syllabusFilterBar.appendChild(btn);
+  }
+}
+
+function getTextbookKeys() {
+  const keys = [...new Set(textbooks.map(t => (t.textbook || "").trim()).filter(Boolean))];
+  keys.sort((a,b)=>a.localeCompare(b));
+  return keys;
+}
+
+function renderTextbookFilterButtons() {
+  const keys = getTextbookKeys();
+  if (!activeTextbookKey) activeTextbookKey = keys[0] || null;
+
+  textbookFilterBar.innerHTML = "";
+  for (const k of keys) {
+    const btn = document.createElement("button");
+    btn.className = "filterBtn" + (activeTextbookKey === k ? " active" : "");
+    btn.textContent = k;
+    btn.onclick = () => {
+      activeTextbookKey = k;
+      renderTextbookFilterButtons();
+      renderTextbookSearch();
+    };
+    textbookFilterBar.appendChild(btn);
+  }
+}
+
+// ---------- Syllabus + Textbook listing (filtered) ----------
+function renderSyllabusSearch() {
+  const q = (syllabusSearch.value || "").trim().toLowerCase();
+  const lesson = getSelectedLesson();
+  if (!lesson) { syllabusResults.innerHTML = ""; return; }
+
+  const bucket = TOPIC_BUCKETS.find(b => b.key === activeSyllabusBucket);
+
+  const items = syllabus
+    .filter(s => inSyllabusBucket(s, bucket))
+    .filter(s => !q || `${s.id} ${s.section} ${s.topic} ${s.text}`.toLowerCase().includes(q))
+    .slice(0, 80);
+
+  syllabusResults.innerHTML = "";
+  for (const s of items) {
+    const row = document.createElement("div");
+    row.className = "result";
+
+    const left = document.createElement("div");
+    left.className = "text";
+    left.innerHTML = `
+      <div><strong>${escapeHtml(s.id)}</strong> <span class="sub">${escapeHtml(s.section || "")}</span></div>
+      <div class="sub">${escapeHtml(s.topic || "")}</div>
+      <div class="sub">${escapeHtml(trunc(s.text || "", 170))}</div>
+    `;
+
+    const btn = document.createElement("button");
+    btn.className = "treeBtn";
+    btn.textContent = "Add";
+    btn.onclick = () => {
+      lesson.syllabus_ids = lesson.syllabus_ids || [];
+      if (!lesson.syllabus_ids.includes(s.id)) lesson.syllabus_ids.push(s.id);
+      renderSelectedChips();
+    };
+
+    row.appendChild(left);
+    row.appendChild(btn);
+    syllabusResults.appendChild(row);
+  }
+}
+
+function inSyllabusBucket(s, bucket) {
+  if (!bucket) return true;
+  const hay = `${s.topic || ""} ${s.section || ""}`.toLowerCase();
+  return bucket.match.some(m => hay.includes(m));
+}
+
+function renderTextbookSearch() {
+  const q = (textbookSearch.value || "").trim().toLowerCase();
+  const lesson = getSelectedLesson();
+  if (!lesson) { textbookResults.innerHTML = ""; return; }
+
+  const items = textbooks
+    .filter(tb => !activeTextbookKey || (tb.textbook || "").trim() === activeTextbookKey)
+    .filter(tb => !q || `${tb.id} ${tb.textbook} ${tb.label} ${tb.detail}`.toLowerCase().includes(q))
+    .slice(0, 120);
+
+  textbookResults.innerHTML = "";
+  for (const tb of items) {
+    const row = document.createElement("div");
+    row.className = "result";
+
+    const left = document.createElement("div");
+    left.className = "text";
+    left.innerHTML = `
+      <div><strong>${escapeHtml(tb.id)}</strong> <span class="sub">${escapeHtml(tb.textbook || "")}</span></div>
+      <div class="sub">${escapeHtml(tb.label || "")}</div>
+      <div class="sub">${escapeHtml(trunc(tb.detail || "", 170))}</div>
+    `;
+
+    const btn = document.createElement("button");
+    btn.className = "treeBtn";
+    btn.textContent = "Add";
+    btn.onclick = () => {
+      lesson.textbook_ids = lesson.textbook_ids || [];
+      if (!lesson.textbook_ids.includes(tb.id)) lesson.textbook_ids.push(tb.id);
+      renderSelectedChips();
+    };
+
+    row.appendChild(left);
+    row.appendChild(btn);
+    textbookResults.appendChild(row);
+  }
+}
+
+function renderSelectedChips() {
+  const lesson = getSelectedLesson();
+  if (!lesson) return;
+
+  syllabusSelected.innerHTML = "";
+  (lesson.syllabus_ids || []).forEach(id => {
+    syllabusSelected.appendChild(makeChip(id, () => {
+      lesson.syllabus_ids = (lesson.syllabus_ids || []).filter(x => x !== id);
+      renderSelectedChips();
+    }));
   });
-  $("editTextbooks").addEventListener("input", (e) => { lesson.textbook_ids = splitIds(e.target.value); });
 
-  // Optional MathJax refresh
-  typesetMath().catch(() => {});
-}
-
-function splitIds(s) {
-  return String(s || "")
-    .split(",")
-    .map(x => x.trim())
-    .filter(Boolean);
-}
-
-/* ---------- Coverage ---------- */
-function renderCoverage() {
-  if (!coverageViewEl) return;
-  if (!plan?.terms) { coverageViewEl.innerHTML = `<div class="muted">No plan loaded.</div>`; return; }
-
-  const scheduled = new Set();
-  for (const term of plan.terms) {
-    for (const week of (term.weeks || [])) {
-      for (const lesson of (week.lessons || [])) {
-        (lesson.syllabus_ids || []).forEach(id => scheduled.add(id));
-      }
-    }
-  }
-
-  const missing = syllabus.filter(s => !scheduled.has(s.id));
-
-  coverageViewEl.innerHTML = missing.length
-    ? `<div><strong>${missing.length}</strong> objectives not yet scheduled:</div>
-       <ul class="coverList">${missing.slice(0, 300).map(s => `<li><strong>${escapeHtml(s.section || s.id)}</strong> — ${escapeHtml(s.text || "")}</li>`).join("")}</ul>
-       ${missing.length > 300 ? `<div class="muted">Showing first 300.</div>` : ""}`
-    : `<div class="muted">All syllabus objectives appear scheduled 🎉</div>`;
-}
-
-/* ==============================
-   ✅ GitHub Save (robust)
-   ============================== */
-async function saveToGitHub() {
-  const token = (ghTokenEl?.value || localStorage.getItem(LS_TOKEN_KEY) || "").trim();
-  if (!token) {
-    setStatus("No token found. Paste token and click “Save token”.", "error");
-    return;
-  }
-
-  const classId = classSelect.value || CLASSES[0];
-  const path = PLAN_PATH_TEMPLATE(classId);
-
-  setStatus(`Saving ${path} to ${GH_OWNER}/${GH_REPO}@${GH_BRANCH}…`);
-
-  // 1) Get current file (for SHA). If missing, we will create.
-  let sha = null;
-  const getUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(path).replaceAll("%2F","/")}?ref=${encodeURIComponent(GH_BRANCH)}`;
-
-  const getRes = await fetch(getUrl, {
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Accept": "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-    }
+  textbookSelected.innerHTML = "";
+  (lesson.textbook_ids || []).forEach(id => {
+    textbookSelected.appendChild(makeChip(id, () => {
+      lesson.textbook_ids = (lesson.textbook_ids || []).filter(x => x !== id);
+      renderSelectedChips();
+    }));
   });
 
-  if (getRes.status === 200) {
-    const existing = await getRes.json();
-    sha = existing.sha;
-  } else if (getRes.status === 404) {
-    sha = null; // create new
-  } else {
-    const t = await safeText(getRes);
-    throw new Error(`GitHub GET failed (${getRes.status}). ${t}`);
+  typesetMath().catch(()=>{});
+}
+
+function makeChip(id, onRemove) {
+  const div = document.createElement("div");
+  div.className = "chip";
+  div.innerHTML = `<code>${escapeHtml(id)}</code>`;
+  const btn = document.createElement("button");
+  btn.textContent = "×";
+  btn.onclick = onRemove;
+  div.appendChild(btn);
+  return div;
+}
+
+// ---------- Download ----------
+function downloadCurrentPlan() {
+  if (!plan) return;
+  const classId = plan.class_id || classSelect.value || "plan";
+  const blob = new Blob([JSON.stringify(plan, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${classId}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  setStatus("Downloaded plan JSON.", "ok");
+  setTimeout(clearStatus, 1200);
+}
+
+// ---------- GitHub Commit ----------
+async function commitCurrentPlanToGitHub() {
+  if (!plan) return;
+
+  const owner = (ghOwnerEl.value || "").trim();
+  const repo = (ghRepoEl.value || "").trim();
+  const branch = (ghBranchEl.value || "main").trim();
+  const token = (ghTokenEl.value || "").trim();
+
+  if (!owner || !repo || !branch || !token) {
+    throw new Error("Missing GitHub settings. Fill owner/repo/branch/token and click 'Save GitHub Settings'.");
   }
 
-  // 2) PUT updated content
-  const putUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(path).replaceAll("%2F","/")}`;
-  const contentB64 = toBase64Utf8(JSON.stringify(plan, null, 2));
+  const classId = plan.class_id || classSelect.value;
+  const path = `data/plans/${classId}.json`;
 
-  const body = {
-    message: `Update plan: ${classId}`,
-    content: contentB64,
-    branch: GH_BRANCH,
-  };
-  if (sha) body.sha = sha;
+  setStatus(`Fetching current SHA for ${path}…`);
 
-  const putRes = await fetch(putUrl, {
-    method: "PUT",
+  const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`;
+  const existing = await ghRequest(getUrl, token);
+
+  const sha = existing.sha;
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(plan, null, 2))));
+
+  setStatus(`Committing update to ${path} on ${branch}…`);
+
+  const putUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+  const body = { message: `Update plan: ${classId}`, content, sha, branch };
+
+  const res = await ghRequest(putUrl, token, "PUT", body);
+  setStatus(`Committed successfully.\n${res?.commit?.sha ? "Commit: " + res.commit.sha : ""}`, "ok");
+}
+
+async function ghRequest(url, token, method="GET", body=null) {
+  const res = await fetch(url, {
+    method,
     headers: {
-      "Authorization": `Bearer ${token}`,
       "Accept": "application/vnd.github+json",
-      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
       "X-GitHub-Api-Version": "2022-11-28",
+      ...(body ? { "Content-Type": "application/json" } : {})
     },
-    body: JSON.stringify(body)
+    body: body ? JSON.stringify(body) : null
   });
 
-  if (!putRes.ok) {
-    const t = await safeText(putRes);
-    // Common helpful hints
-    if (putRes.status === 401 || putRes.status === 403) {
-      throw new Error(
-        `GitHub PUT failed (${putRes.status}). Token likely missing permissions.\n` +
-        `For fine-grained tokens: allow Repository “IBMATHS” and enable “Contents: Read and write”.\n` +
-        `${t}`
-      );
-    }
-    if (putRes.status === 409) {
-      throw new Error(
-        `GitHub PUT failed (409). File changed since you loaded it.\n` +
-        `Click “Reload” then save again.\n` +
-        `${t}`
-      );
-    }
-    throw new Error(`GitHub PUT failed (${putRes.status}). ${t}`);
+  const text = await res.text();
+  let json = null;
+  try { json = text ? JSON.parse(text) : null; } catch {}
+
+  if (!res.ok) {
+    const msg = json?.message || res.statusText || "GitHub API error";
+    throw new Error(`GitHub API error (${res.status}): ${msg}\nURL: ${url}`);
   }
-
-  const putJson = await putRes.json();
-  setStatus(`Saved ✓ Commit: ${putJson?.commit?.sha?.slice(0, 7) || "ok"}`, "ok");
-  setTimeout(clearStatus, 1800);
+  return json;
 }
 
-/* ---------- Helpers ---------- */
-async function loadJSON(url, label) {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Failed to load ${label}: ${res.status} ${res.statusText}\nURL: ${url}`);
-  return await res.json();
+// ---------- Selection getters ----------
+function getSelectedTerm() {
+  return (plan?.terms || [])[selected.termIndex] || null;
 }
-
-function getRepoRoot() {
-  const path = window.location.pathname;
-  const idx = path.lastIndexOf("/teacher/");
-  if (idx >= 0) return window.location.origin + path.slice(0, idx + 1);
-  return new URL(".", window.location.href).toString();
-}
-
-function getSelectedTerm() { return (plan?.terms || [])[selected.termIndex] || null; }
 function getSelectedWeek() {
   const term = getSelectedTerm();
   return (term?.weeks || [])[selected.weekIndex] || null;
@@ -405,41 +658,55 @@ function getSelectedLesson() {
   return (week.lessons || [])[selected.lessonIndex] || null;
 }
 
-function setStatus(msg, kind = "info") {
+// ---------- Helpers ----------
+async function loadJSON(url, label) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to load ${label}: ${res.status} ${res.statusText}\nURL: ${url}`);
+  return await res.json();
+}
+
+function getRepoRoot() {
+  const path = window.location.pathname;
+  const idx = path.lastIndexOf("/teacher/");
+  if (idx >= 0) return window.location.origin + path.slice(0, idx + 1);
+  const url = new URL(".", window.location.href);
+  return url.toString();
+}
+
+function setStatus(msg, kind="info") {
   statusEl.hidden = false;
-  statusEl.className = "status" + (kind === "error" ? " error" : kind === "ok" ? " ok" : "");
+  statusEl.className = "status" + (kind==="error" ? " error" : kind==="ok" ? " ok" : "");
   statusEl.textContent = msg;
 }
-function clearStatus() {
-  statusEl.hidden = true;
-  statusEl.textContent = "";
-}
-function showError(err) {
-  console.error(err);
-  setStatus(err?.message || String(err), "error");
+function clearStatus(){ statusEl.hidden = true; statusEl.textContent=""; }
+function showError(err){ console.error(err); setStatus(err?.message || String(err), "error"); }
+
+async function typesetMath(){
+  try { if (window.MathJax?.typesetPromise) await window.MathJax.typesetPromise(); } catch {}
 }
 
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+function hydrateGitHubFields(){
+  const saved = safeParse(localStorage.getItem("planner_github") || "{}");
+  ghOwnerEl.value = saved.owner || "";
+  ghRepoEl.value = saved.repo || "";
+  ghBranchEl.value = saved.branch || "main";
+  ghTokenEl.value = saved.token || "";
 }
-function escapeAttr(s) { return escapeHtml(s).replaceAll("`", "&#96;"); }
-
-async function typesetMath() {
-  try {
-    if (window.MathJax?.typesetPromise) await window.MathJax.typesetPromise();
-  } catch {}
+function saveGitHubFields(){
+  const payload = {
+    owner: (ghOwnerEl.value||"").trim(),
+    repo: (ghRepoEl.value||"").trim(),
+    branch: (ghBranchEl.value||"main").trim(),
+    token: (ghTokenEl.value||"").trim()
+  };
+  localStorage.setItem("planner_github", JSON.stringify(payload));
 }
+function safeParse(s){ try { return JSON.parse(s); } catch { return {}; } }
 
-function toBase64Utf8(str) {
-  // Safe base64 for unicode
-  return btoa(unescape(encodeURIComponent(str)));
+function escapeHtml(s){
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
 }
-
-async function safeText(res) {
-  try { return await res.text(); } catch { return ""; }
+function trunc(s, n){
+  const t = String(s);
+  return t.length <= n ? t : t.slice(0, n-1) + "…";
 }
