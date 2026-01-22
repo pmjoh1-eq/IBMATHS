@@ -33,7 +33,9 @@
                 "AA_SL_1-5",
                 "AA_SL_1-7"
               ],
-              "textbook_ids": [],
+              "textbook_ids": [
+                "tb-63"
+              ],
               "homework": "",
               "notes_latex": ""
             }
