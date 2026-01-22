@@ -20,7 +20,7 @@
               "lesson_id": "L1",
               "title": "Basic Operations",
               "syllabus_ids": [
-                "AI_SL_1-1"
+                "AA_SL_1-1"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -35,10 +35,8 @@
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "Laws of Exponents and Logarithms",
-              "syllabus_ids": [
-                "AI_SL_1-5"
-              ],
+              "title": "Exponent Laws",
+              "syllabus_ids": [],
               "textbook_ids": [],
               "homework": "",
               "notes_latex": ""
@@ -60,6 +58,54 @@
               "notes_latex": ""
             }
           ]
+        },
+        {
+          "week_id": "T1-W3",
+          "label": "Week 3",
+          "start_date": "",
+          "lessons": []
+        },
+        {
+          "week_id": "T1-W4",
+          "label": "Week 4",
+          "start_date": "",
+          "lessons": []
+        },
+        {
+          "week_id": "T1-W5",
+          "label": "Week 5",
+          "start_date": "",
+          "lessons": []
+        },
+        {
+          "week_id": "T1-W6",
+          "label": "Week 6",
+          "start_date": "",
+          "lessons": []
+        },
+        {
+          "week_id": "T1-W7",
+          "label": "Week 7",
+          "start_date": "",
+          "lessons": []
+        },
+        {
+          "week_id": "T1-W8",
+          "label": "Week 8",
+          "start_date": "",
+          "lessons": []
+        },
+        {
+          "week_id": "T1-W9",
+          "label": "Week 9",
+          "start_date": "",
+          "lessons": []
+        },
+        {
+          "week_id": "T1-W10",
+          "label": "Week 10",
+          "start_date": "",
+          "lessons": []
         }
       ]
     },
