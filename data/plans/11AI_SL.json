@@ -1,7 +1,7 @@
 {
-  "class_id": "11AI_SL",
-  "label": "Year 11 AI SL",
-  "programme": "AI",
+  "class_id": "11AA_SL",
+  "label": "Year 11 AA SL",
+  "programme": "AA",
   "level": "SL",
   "years": [
     2026
@@ -20,7 +20,75 @@
               "lesson_id": "L1",
               "title": "Basic Operations",
               "syllabus_ids": [
-                "AA_SL_1-1"
+                "AI_SL_1-1"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
+        },
+        {
+          "week_id": "T1-W2",
+          "label": "Week 2",
+          "start_date": "",
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Laws of Exponents and Logarithms",
+              "syllabus_ids": [
+                "AI_SL_1-5"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
+        },
+        {
+          "week_id": "T1-W3",
+          "label": "Week 3",
+          "start_date": "",
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Arithmetic Sequences and Series",
+              "syllabus_ids": [
+                "AI_SL_1-2"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
+        },
+        {
+          "week_id": "T1-W4",
+          "label": "Week 4",
+          "start_date": "",
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Geometric Sequences and Series ",
+              "syllabus_ids": [
+                "AI_SL_1-3"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
+        },
+        {
+          "week_id": "T1-W5",
+          "label": "Week 5",
+          "start_date": "",
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Financial Applications ",
+              "syllabus_ids": [
+                "AI_SL_1-4"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -28,7 +96,100 @@
             },
             {
               "lesson_id": "L2",
-              "title": "New Lesson 2",
+              "title": "Module 1 Quiz",
+              "syllabus_ids": [],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
+        },
+        {
+          "week_id": "T1-W6",
+          "label": "Week 6",
+          "start_date": "",
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Linear Equations",
+              "syllabus_ids": [
+                "AI_SL_2-1"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
+        },
+        {
+          "week_id": "T1-W7",
+          "label": "Week 7",
+          "lessons": [
+            {
+              "lesson_id": "L2",
+              "title": "Introduction to Functions",
+              "syllabus_ids": [
+                "AI_SL_2-2"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
+        },
+        {
+          "week_id": "T1-W8",
+          "label": "Week 8",
+          "start_date": "",
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Graphing and Sketching Functions Identifying Key Features",
+              "syllabus_ids": [
+                "AI_SL_2-3",
+                "AI_SL_2-4",
+                "AI_SL_2-5"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
+        },
+        {
+          "week_id": "T1-W9",
+          "label": "Week 9",
+          "start_date": "",
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Graphing and Sketching Functions Identifying Key Features",
+              "syllabus_ids": [
+                "AI_SL_2-3",
+                "AI_SL_2-4",
+                "AI_SL_2-5"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
+        },
+        {
+          "week_id": "T1-W10",
+          "label": "Week 10",
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Revision",
+              "syllabus_ids": [],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            },
+            {
+              "lesson_id": "L2",
+              "title": "Module 2 Quiz",
               "syllabus_ids": [],
               "textbook_ids": [],
               "homework": "",
