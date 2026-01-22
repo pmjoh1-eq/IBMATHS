@@ -25,10 +25,35 @@
               "textbook_ids": [],
               "homework": "",
               "notes_latex": ""
+            }
+          ]
+        },
+        {
+          "week_id": "T1-W2",
+          "label": "Week 2",
+          "start_date": "",
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Laws of Exponents and Logarithms",
+              "syllabus_ids": [
+                "AI_SL_1-5"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
             },
             {
               "lesson_id": "L2",
               "title": "New Lesson 2",
+              "syllabus_ids": [],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            },
+            {
+              "lesson_id": "L3",
+              "title": "New Lesson 3",
               "syllabus_ids": [],
               "textbook_ids": [],
               "homework": "",
