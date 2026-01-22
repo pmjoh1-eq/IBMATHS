@@ -20,10 +20,16 @@
               "lesson_id": "L1",
               "title": "Basic Operations",
               "syllabus_ids": [
-                "AA_SL_1-1",
-                "AA_SL_1-5",
-                "AA_SL_1-7"
+                "AA_SL_1-1"
               ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            },
+            {
+              "lesson_id": "L2",
+              "title": "New Lesson 2",
+              "syllabus_ids": [],
               "textbook_ids": [],
               "homework": "",
               "notes_latex": ""
