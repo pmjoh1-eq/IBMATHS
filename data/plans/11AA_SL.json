@@ -20,7 +20,7 @@
               "lesson_id": "L1",
               "title": "Basic Operations",
               "syllabus_ids": [
-                "AA_SL_1-1"
+                "AI_SL_1-1"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -35,24 +35,10 @@
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "Exponent Laws",
-              "syllabus_ids": [],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            },
-            {
-              "lesson_id": "L2",
-              "title": "New Lesson 2",
-              "syllabus_ids": [],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            },
-            {
-              "lesson_id": "L3",
-              "title": "New Lesson 3",
-              "syllabus_ids": [],
+              "title": "Laws of Exponents and Logarithms",
+              "syllabus_ids": [
+                "AI_SL_1-5"
+              ],
               "textbook_ids": [],
               "homework": "",
               "notes_latex": ""
@@ -63,7 +49,18 @@
           "week_id": "T1-W3",
           "label": "Week 3",
           "start_date": "",
-          "lessons": []
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "Arithmetic Sequences and Series",
+              "syllabus_ids": [
+                "AI_SL_1-2"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
         },
         {
           "week_id": "T1-W4",
@@ -86,7 +83,6 @@
         {
           "week_id": "T1-W7",
           "label": "Week 7",
-          "start_date": "",
           "lessons": []
         },
         {
@@ -104,8 +100,16 @@
         {
           "week_id": "T1-W10",
           "label": "Week 10",
-          "start_date": "",
-          "lessons": []
+          "lessons": [
+            {
+              "lesson_id": "L1",
+              "title": "New Lesson 1",
+              "syllabus_ids": [],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            }
+          ]
         }
       ]
     },
