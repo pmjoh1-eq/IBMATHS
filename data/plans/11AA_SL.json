@@ -28,14 +28,9 @@
             },
             {
               "lesson_id": "L2",
-              "title": "Laws of Exponents and Logarithms",
-              "syllabus_ids": [
-                "AA_SL_1-5",
-                "AA_SL_1-7"
-              ],
-              "textbook_ids": [
-                "tb-63"
-              ],
+              "title": "New Lesson 2",
+              "syllabus_ids": [],
+              "textbook_ids": [],
               "homework": "",
               "notes_latex": ""
             }
