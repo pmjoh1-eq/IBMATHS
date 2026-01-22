@@ -20,7 +20,7 @@
               "lesson_id": "L1",
               "title": "Basic Operations",
               "syllabus_ids": [
-                "AA_SL_1-1"
+                "AI_SL_1-1"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -35,19 +35,9 @@
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "Exponent Laws",
+              "title": "Laws of Exponents and Logarithms",
               "syllabus_ids": [
-                "AA_SL_1-5"
-              ],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            },
-            {
-              "lesson_id": "L2",
-              "title": "Log Laws",
-              "syllabus_ids": [
-                "AA_SL_1-7"
+                "AI_SL_1-5"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -62,27 +52,9 @@
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "Arithmetic Sequence and Series",
+              "title": "Arithmetic Sequences and Series",
               "syllabus_ids": [
-                "AA_SL_1-2"
-              ],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            },
-            {
-              "lesson_id": "L2",
-              "title": "Geometric Sequence and Series",
-              "syllabus_ids": [],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            },
-            {
-              "lesson_id": "L3",
-              "title": "Sum of Infinite Geometric Series",
-              "syllabus_ids": [
-                "AA_SL_1-8"
+                "AI_SL_1-2"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -97,9 +69,9 @@
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "Applications of Sequences and Series",
+              "title": "Geometric Sequences and Series ",
               "syllabus_ids": [
-                "AA_SL_1-4"
+                "AI_SL_1-3"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -114,6 +86,16 @@
           "lessons": [
             {
               "lesson_id": "L1",
+              "title": "Financial Applications ",
+              "syllabus_ids": [
+                "AI_SL_1-4"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            },
+            {
+              "lesson_id": "L2",
               "title": "Module 1 Quiz",
               "syllabus_ids": [],
               "textbook_ids": [],
@@ -129,19 +111,9 @@
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "Equations of a straight line",
+              "title": "Linear Equations",
               "syllabus_ids": [
-                "AA_SL_2-1"
-              ],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            },
-            {
-              "lesson_id": "L2",
-              "title": "Parallel and Perpendicular Lines",
-              "syllabus_ids": [
-                "AA_SL_2-1"
+                "AI_SL_2-1"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -152,33 +124,12 @@
         {
           "week_id": "T1-W7",
           "label": "Week 7",
-          "start_date": "",
           "lessons": [
             {
-              "lesson_id": "L1",
-              "title": "Expansion and Factorization of Quadratics",
-              "syllabus_ids": [
-                "AA_SL_2-6"
-              ],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            },
-            {
               "lesson_id": "L2",
-              "title": "Equations of a Quadratic",
+              "title": "Introduction to Functions",
               "syllabus_ids": [
-                "AA_SL_2-6"
-              ],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            },
-            {
-              "lesson_id": "L3",
-              "title": "Quadratic equations and inequations",
-              "syllabus_ids": [
-                "AA_SL_2-7"
+                "AI_SL_2-2"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -193,9 +144,11 @@
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "Exponential Equations",
+              "title": "Graphing and Sketching Functions Identifying Key Features",
               "syllabus_ids": [
-                "AA_SL_2-9"
+                "AI_SL_2-3",
+                "AI_SL_2-4",
+                "AI_SL_2-5"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -203,10 +156,8 @@
             },
             {
               "lesson_id": "L2",
-              "title": "Logarithmic Equations",
-              "syllabus_ids": [
-                "AA_SL_2-9"
-              ],
+              "title": "New Lesson 2",
+              "syllabus_ids": [],
               "textbook_ids": [],
               "homework": "",
               "notes_latex": ""
@@ -217,30 +168,21 @@
           "week_id": "T1-W9",
           "label": "Week 9",
           "start_date": "",
+          "lessons": []
+        },
+        {
+          "week_id": "T1-W10",
+          "label": "Week 10",
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "Rational Functions",
-              "syllabus_ids": [],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            },
-            {
-              "lesson_id": "L2",
-              "title": "Reciprocal Functions",
+              "title": "New Lesson 1",
               "syllabus_ids": [],
               "textbook_ids": [],
               "homework": "",
               "notes_latex": ""
             }
           ]
-        },
-        {
-          "week_id": "T1-W10",
-          "label": "Week 10",
-          "start_date": "",
-          "lessons": []
         }
       ]
     },
