@@ -111,8 +111,10 @@
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "New Lesson 1",
-              "syllabus_ids": [],
+              "title": "Linear Equations",
+              "syllabus_ids": [
+                "AI_SL_2-1"
+              ],
               "textbook_ids": [],
               "homework": "",
               "notes_latex": ""
