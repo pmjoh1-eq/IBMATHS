@@ -18,15 +18,15 @@
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "Scientific Notation",
+              "title": "Basic Operations",
               "syllabus_ids": [
-                "AA_SL_1-1"
+                "AA_SL_1-1",
+                "AA_SL_1-5",
+                "AA_SL_1-7"
               ],
-              "textbook_ids": [
-                "tb-23"
-              ],
-              "homework": "Core SL Ch 3 Ex 3A Q1–10",
-              "notes_latex": "Recall that $a \\times 10^k$ represents scientific notation."
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
             }
           ]
         }
@@ -46,32 +46,7 @@
           "week_id": "T2-W2",
           "label": "Week 2",
           "start_date": "2026-05-03",
-          "lessons": [
-            {
-              "lesson_id": "L1",
-              "title": "Test",
-              "syllabus_ids": [
-                "AA_SL_3-1"
-              ],
-              "textbook_ids": [
-                "tb-78"
-              ],
-              "homework": "",
-              "notes_latex": "$x^2$"
-            },
-            {
-              "lesson_id": "L2",
-              "title": "New Lesson 2",
-              "syllabus_ids": [
-                "AA_SL_1-2"
-              ],
-              "textbook_ids": [
-                "tb-39"
-              ],
-              "homework": "",
-              "notes_latex": ""
-            }
-          ]
+          "lessons": []
         }
       ]
     },
