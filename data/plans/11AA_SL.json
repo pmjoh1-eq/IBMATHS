@@ -20,7 +20,7 @@
               "lesson_id": "L1",
               "title": "Basic Operations",
               "syllabus_ids": [
-                "AI_SL_1-1"
+                "AA_SL_1-1"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -35,9 +35,19 @@
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "Laws of Exponents and Logarithms",
+              "title": "Exponent Laws",
               "syllabus_ids": [
-                "AI_SL_1-5"
+                "AA_SL_1-5"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            },
+            {
+              "lesson_id": "L2",
+              "title": "Log Laws",
+              "syllabus_ids": [
+                "AA_SL_1-7"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -52,9 +62,27 @@
           "lessons": [
             {
               "lesson_id": "L1",
-              "title": "Arithmetic Sequences and Series",
+              "title": "Arithmetic Sequence and Series",
               "syllabus_ids": [
-                "AI_SL_1-2"
+                "AA_SL_1-2"
+              ],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            },
+            {
+              "lesson_id": "L2",
+              "title": "Geometric Sequence and Series",
+              "syllabus_ids": [],
+              "textbook_ids": [],
+              "homework": "",
+              "notes_latex": ""
+            },
+            {
+              "lesson_id": "L3",
+              "title": "Sum of Infinite Geometric Series",
+              "syllabus_ids": [
+                "AA_SL_1-8"
               ],
               "textbook_ids": [],
               "homework": "",
@@ -66,33 +94,13 @@
           "week_id": "T1-W4",
           "label": "Week 4",
           "start_date": "",
-          "lessons": [
-            {
-              "lesson_id": "L1",
-              "title": "Geometric Sequences and Series ",
-              "syllabus_ids": [
-                "AI_SL_1-3"
-              ],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            }
-          ]
+          "lessons": []
         },
         {
           "week_id": "T1-W5",
           "label": "Week 5",
           "start_date": "",
-          "lessons": [
-            {
-              "lesson_id": "L1",
-              "title": "New Lesson 1",
-              "syllabus_ids": [],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            }
-          ]
+          "lessons": []
         },
         {
           "week_id": "T1-W6",
@@ -103,6 +111,7 @@
         {
           "week_id": "T1-W7",
           "label": "Week 7",
+          "start_date": "",
           "lessons": []
         },
         {
@@ -120,16 +129,8 @@
         {
           "week_id": "T1-W10",
           "label": "Week 10",
-          "lessons": [
-            {
-              "lesson_id": "L1",
-              "title": "New Lesson 1",
-              "syllabus_ids": [],
-              "textbook_ids": [],
-              "homework": "",
-              "notes_latex": ""
-            }
-          ]
+          "start_date": "",
+          "lessons": []
         }
       ]
     },
